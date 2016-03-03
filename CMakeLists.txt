@@ -11,11 +11,11 @@ find_package(OpenCV REQUIRED)
 #set(SOURCE_FILES grads_and_etc.cpp)
 #add_executable(comvision ${SOURCE_FILES})
 
-#set(SOURCE_FILES detectors.cpp)
-#add_executable(comvision ${SOURCE_FILES})
-
-set(SOURCE_FILES base_search.cpp)
+set(SOURCE_FILES detectors.cpp)
 add_executable(comvision ${SOURCE_FILES})
+
+#set(SOURCE_FILES base_search.cpp)
+#add_executable(comvision ${SOURCE_FILES})
 
 
 include_directories(${OpenCV_INCLUDE_DIRS})

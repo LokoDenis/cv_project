@@ -14,15 +14,15 @@ int main() {
     Mat src = imread("/home/oracle/Project/Images/forth1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
     Mat sec_src = imread("/home/oracle/Project/Images/exam.jpg", CV_LOAD_IMAGE_GRAYSCALE);
     Mat third_src = imread("/home/oracle/Project/Images/lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-    Ptr<Feature2D> f2d = SURF::create(500);
-    Ptr<Feature2D> f2d_sift = SIFT::create();
+    Ptr<Feature2D> f2d = SURF::create(800);
+    Ptr<Feature2D> f2d_sift = SIFT::create(); //  trying cycles
     // Setup SimpleBlobDetector parameters.
     SimpleBlobDetector::Params params;
 
     //rotating pictures
     cv::Mat src_rotated;
     cv::Point2d src_center(src.cols * 0.5, src.rows * 0.5); // defining a center of the source picture
-    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 30 , 1);  // creating a rotation matrix
+    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 15 , 1);  // creating a rotation matrix
     warpAffine(src, src_rotated, rot_mat, src.size());
 
     cv::Mat sec_src_rotated;
@@ -64,7 +64,7 @@ int main() {
     std::vector<KeyPoint> points_one, points_two, blobe_points_one, blobe_points_two;
     std::vector<KeyPoint> points_sift_one, points_sift_two;
     f2d -> detectAndCompute(src, Mat(), points_one, descriptor_one); //surf
-    f2d -> detectAndCompute(src_rotated, Mat(),  points_two, descriptor_two);
+    f2d -> detectAndCompute(src_rotated, Mat(), points_two, descriptor_two);
     f2d_sift -> detectAndCompute(third_src, Mat(), points_sift_one, descriptor_sift_one);
     f2d_sift -> detectAndCompute(third_src_rotated, Mat(), points_sift_two, descriptor_sift_two);
     blobe_detector -> detect(sec_src, blobe_points_one);
@@ -72,12 +72,12 @@ int main() {
 
     Mat keys_one, keys_two, blobe_keys_one, blobe_keys_two, sift_keys_one, sift_keys_two;
 
-    drawKeypoints(src, points_one, keys_one, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
-    drawKeypoints(src_rotated, points_two, keys_two, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
-    drawKeypoints(sec_src, blobe_points_one, blobe_keys_one, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-    drawKeypoints(sec_src_rotated, blobe_points_two, blobe_keys_two, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-    drawKeypoints(third_src, points_sift_one, sift_keys_one, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-    drawKeypoints(third_src_rotated, points_sift_two, sift_keys_two, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    drawKeypoints(src, points_one, keys_one, Scalar(0, 0, 255), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+    drawKeypoints(src_rotated, points_two, keys_two, Scalar(0, 0, 255), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+    drawKeypoints(sec_src, blobe_points_one, blobe_keys_one, Scalar(0,0,255), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+    drawKeypoints(sec_src_rotated, blobe_points_two, blobe_keys_two, Scalar(0,0,255), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+    drawKeypoints(third_src, points_sift_one, sift_keys_one, Scalar(0,0,255), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+    drawKeypoints(third_src_rotated, points_sift_two, sift_keys_two, Scalar(0,0,255), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 
 
     // image too large to fill the screen
@@ -89,7 +89,7 @@ int main() {
     Mat sized_keys_sift_two;
 
     resize(keys_one, sized_keys_one, Size(600, 800), 0, 0, INTER_LINEAR);
-    resize(keys_two, sized_keys_two,Size(600, 800), 0, 0, INTER_LINEAR);
+    resize(keys_two, sized_keys_two, Size(600, 800), 0, 0, INTER_LINEAR);
     resize(blobe_keys_one, sized_keys_blobe_one, Size(600, 600), 0, 0, INTER_LINEAR);
     resize(blobe_keys_two, sized_keys_blobe_two, Size(600, 600), 0, 0, INTER_LINEAR);
     resize(sift_keys_one, sized_keys_sift_one, Size(600, 600), 0, 0, INTER_LINEAR);
@@ -101,8 +101,8 @@ int main() {
     imshow ("SURF", sized_keys_one);
     imshow ("SURF2", sized_keys_two);
     waitKey(0);
-    destroyWindow("SURF");
-    destroyWindow("SURF2");
+//    destroyWindow("SURF");
+//    destroyWindow("SURF2");
 
     namedWindow("BLOBE", CV_WINDOW_AUTOSIZE);
     namedWindow("BLOBE2", CV_WINDOW_AUTOSIZE);
@@ -129,7 +129,7 @@ int main() {
 
 
     //matching
-    BFMatcher matcher;
+    FlannBasedMatcher matcher;
     BFMatcher matcher_sift;
     std::vector<DMatch> surf_matches_vector;
     std::vector<DMatch> sift_matches_vector;
@@ -143,7 +143,6 @@ int main() {
     imshow ("SURF_matches", surf_matches);
 
     waitKey(0);
-    destroyWindow("SURF_matches");
 
     namedWindow("SIFT_matches", 1);
     Mat sift_matches;
@@ -151,6 +150,7 @@ int main() {
     imshow ("SIFT_matches", sift_matches);
 
     waitKey(0);
+
 
     return 0;
 }
