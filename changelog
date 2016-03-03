@@ -1,0 +1,18 @@
+- added first-steps.cpp and the first-steps folder, which contains some images to visualize the progress.
+This prothgramme shows basic operations with openCV matrix, such as rotation and color inversion.
+
+- added grads_and_etc.cpp and the Gradients folder, which contains some images to visualize the progress.
+This programme shows basic operation with gradients by X and Y axes.
+
+- added detectors.cpp and the Detected_dotes folder, which contains some images to visualize the progress.
+This programme shows some operations with detectors, descriptors and image matching. There are used different commands for same operations to show the difference between them.
+
+- added base_search.cpp.
+This programme saves pictures in the specified folder to a file. There is used a custom "image" structure. 
+
+struct image {
+    cv::Mat source;
+    std::vector<cv::KeyPoint> keys;
+};
+
+  

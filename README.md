@@ -2,11 +2,14 @@
 
 This README would normally document whatever steps are necessary to get your application up and running.
 
-### What is this repository for? ###
+### OpenCV Amateur Project ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+* This is the project based on The OPENCV library. Supporting by Denis Belyakov, 1st course student of the faculty of Computer Science, Higher School of Economics.
+
+Guided by Vadim Gorbachev.
+
+* Current version 0.1
+
 
 ### How do I get set up? ###
 
@@ -25,5 +28,6 @@ This README would normally document whatever steps are necessary to get your app
 
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+* The owner of this repo is alev.
+* Contact emails: lokodenis73@gmail.com
+		  dobelyakov@edu.hse.ru
