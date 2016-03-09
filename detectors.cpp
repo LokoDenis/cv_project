@@ -13,9 +13,9 @@ using namespace cv::xfeatures2d;
 int main() {
     Mat src = imread("/home/oracle/Project/Images/lena.jpg", CV_LOAD_IMAGE_UNCHANGED);
     Mat sec_src = imread("/home/oracle/Project/Images/exam.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-    Mat third_src = imread("/home/oracle/Project/Images/image.jpg", CV_LOAD_IMAGE_UNCHANGED);
-    Ptr<Feature2D> f2d = SURF::create(1000);
-    Ptr<Feature2D> f2d_sift = SIFT::create(0, 3, 0.2 , 15, 1.2); //  trying cycles
+    Mat third_src = imread("/home/oracle/Project/Images/4th2.jpg", CV_LOAD_IMAGE_UNCHANGED);
+    Ptr<Feature2D> f2d = SURF::create(1000, 1, 2, 1, 0);
+    Ptr<Feature2D> f2d_sift = SIFT::create(0, 4, 0.3 , 10, 1.6); //  trying cycles
     // Setup SimpleBlobDetector parameters.
     SimpleBlobDetector::Params params;
 
@@ -81,8 +81,8 @@ int main() {
     resize(src_rotated, sized_src_two, Size(600, 600), 0, 0, INTER_LINEAR);
     resize(sec_src, sized_src_blobe_one, Size(600, 600), 0, 0, INTER_LINEAR);
     resize(sec_src_rotated, sized_src_blobe_two, Size(600, 600), 0, 0, INTER_LINEAR);
-    resize(third_src, sized_src_sift_one, Size(800, 600), 0, 0, INTER_LINEAR);
-    resize(third_src_rotated, sized_src_sift_two, Size(800, 600), 0, 0, INTER_LINEAR);
+    resize(third_src, sized_src_sift_one, Size(600, 800), 0, 0, INTER_LINEAR);
+    resize(third_src_rotated, sized_src_sift_two, Size(600, 800), 0, 0, INTER_LINEAR);
 
     // descriptors and detectors
 
