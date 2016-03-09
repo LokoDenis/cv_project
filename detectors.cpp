@@ -11,18 +11,18 @@ using namespace cv;
 using namespace cv::xfeatures2d;
 
 int main() {
-    Mat src = imread("/home/oracle/Project/Images/forth1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+    Mat src = imread("/home/oracle/Project/Images/lena.jpg", CV_LOAD_IMAGE_UNCHANGED);
     Mat sec_src = imread("/home/oracle/Project/Images/exam.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-    Mat third_src = imread("/home/oracle/Project/Images/lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+    Mat third_src = imread("/home/oracle/Project/Images/4th2.jpg", CV_LOAD_IMAGE_UNCHANGED);
     Ptr<Feature2D> f2d = SURF::create(800);
-    Ptr<Feature2D> f2d_sift = SIFT::create(); //  trying cycles
+    Ptr<Feature2D> f2d_sift = SIFT::create(0, 3, 0.2, 10, 1.2); //  trying cycles
     // Setup SimpleBlobDetector parameters.
     SimpleBlobDetector::Params params;
 
     //rotating pictures
     cv::Mat src_rotated;
     cv::Point2d src_center(src.cols * 0.5, src.rows * 0.5); // defining a center of the source picture
-    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 15 , 1);  // creating a rotation matrix
+    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 80 , 1);  // creating a rotation matrix
     warpAffine(src, src_rotated, rot_mat, src.size());
 
     cv::Mat sec_src_rotated;
@@ -32,7 +32,7 @@ int main() {
 
     cv::Mat third_src_rotated;
     cv::Point2d third_src_center(third_src.cols * 0.5, third_src.rows * 0.5); // defining a center of the source picture
-    cv::Mat third_rot_mat = cv::getRotationMatrix2D(third_src_center, 80 , 1);  // creating a rotation matrix
+    cv::Mat third_rot_mat = cv::getRotationMatrix2D(third_src_center, 0 , 1);  // creating a rotation matrix
     warpAffine(third_src, third_src_rotated, third_rot_mat, third_src.size());
 
     // Change thresholds
@@ -59,6 +59,14 @@ int main() {
     Ptr<SimpleBlobDetector> blobe_detector = SimpleBlobDetector::create(params);
 
     //detecting and computing
+
+//    for (size_t i = 0; i != third_src_rotated.rows; ++i) {
+//        for (size_t j = 0; j != third_src_rotated.cols; ++ j) {
+//            third_src_rotated.at<cv::Vec3b>(i, j)[0] = static_cast<uchar> (255 - third_src_rotated.at<cv::Vec3b>(i, j)[0]);
+//            third_src_rotated.at<cv::Vec3b>(i, j)[1] = static_cast<uchar> (255 - third_src_rotated.at<cv::Vec3b>(i, j)[1]);
+//            third_src_rotated.at<cv::Vec3b>(i, j)[2] = static_cast<uchar> (255 - third_src_rotated.at<cv::Vec3b>(i, j)[2]);
+//        }
+//    }
 
     Mat descriptor_one, descriptor_two, descriptor_sift_one, descriptor_sift_two;
     std::vector<KeyPoint> points_one, points_two, blobe_points_one, blobe_points_two;
@@ -88,12 +96,15 @@ int main() {
     Mat sized_keys_sift_one;
     Mat sized_keys_sift_two;
 
-    resize(keys_one, sized_keys_one, Size(600, 800), 0, 0, INTER_LINEAR);
-    resize(keys_two, sized_keys_two, Size(600, 800), 0, 0, INTER_LINEAR);
+//    sized_keys_sift_one = sift_keys_one.clone();
+//    sized_keys_sift_two = sift_keys_two.clone();
+
+    resize(keys_one, sized_keys_one, Size(600, 600), 0, 0, INTER_LINEAR);
+    resize(keys_two, sized_keys_two, Size(600, 600), 0, 0, INTER_LINEAR);
     resize(blobe_keys_one, sized_keys_blobe_one, Size(600, 600), 0, 0, INTER_LINEAR);
     resize(blobe_keys_two, sized_keys_blobe_two, Size(600, 600), 0, 0, INTER_LINEAR);
-    resize(sift_keys_one, sized_keys_sift_one, Size(600, 600), 0, 0, INTER_LINEAR);
-    resize(sift_keys_two, sized_keys_sift_two, Size(600, 600), 0, 0, INTER_LINEAR);
+    resize(sift_keys_one, sized_keys_sift_one, Size(600, 800), 0, 0, INTER_LINEAR);
+    resize(sift_keys_two, sized_keys_sift_two, Size(600, 800), 0, 0, INTER_LINEAR);
 
 
     namedWindow("SURF", CV_WINDOW_AUTOSIZE);
@@ -101,6 +112,7 @@ int main() {
     imshow ("SURF", sized_keys_one);
     imshow ("SURF2", sized_keys_two);
     waitKey(0);
+
 //    destroyWindow("SURF");
 //    destroyWindow("SURF2");
 
@@ -129,8 +141,8 @@ int main() {
 
 
     //matching
-    FlannBasedMatcher matcher;
-    BFMatcher matcher_sift;
+    BFMatcher matcher (NORM_L2, true);
+    BFMatcher matcher_sift (NORM_L2, true);
     std::vector<DMatch> surf_matches_vector;
     std::vector<DMatch> sift_matches_vector;
     matcher.match(descriptor_one, descriptor_two, surf_matches_vector);
