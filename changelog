@@ -8,11 +8,10 @@ This program shows basic operation with gradients by X and Y axes.
 This program shows some operations with detectors, descriptors and image matching. There are used different commands for same operations to show the difference between them.
 
 - added base_search.cpp.
-This program saves pictures in the specified folder to a file. There is used a custom "image" structure. 
+This program saves pictures in the specified folder to a file. There is used a custom "image" structure.
 
-struct image {
-    cv::Mat source;
-    std::vector<cv::KeyPoint> keys;
-};
+- added clustering.cpp and clusters folder. 
+This program show the operation of image clustering using the k-mean method.
+
 
   
