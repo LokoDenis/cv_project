@@ -31,7 +31,6 @@ int main() {
     imshow (name, drawing);
     waitKey(0);
 
-    Mat clusters(descriptor.size(), CV_32SC1);
     int K = descriptor.rows / 80;
     std::vector<int> labels(descriptor.rows);
     kmeans(descriptor, K, labels,  cvTermCriteria(CV_TERMCRIT_NUMBER + CV_TERMCRIT_EPS, 10000, 0.001), 10, KMEANS_PP_CENTERS);
@@ -40,13 +39,18 @@ int main() {
     // int flags, OutputArray centers=noArray())
 
     //show dotes of claster m;
-//    int m = 1;
     for (size_t i = 0; i != keys.size(); ++i) {
         for (int m = 0; m != K; ++m) {
             if (labels[i] == m) {
                 circle(src, keys[i].pt, 3, m * 15, CV_FILLED, 8, 0);
             }
         }
+    }
+
+    // creating visual words
+    std::vector<int> word (K, 0);
+    for (size_t i = 0; i != labels.size(); ++i) {
+        ++word[labels[i]];
     }
 
     name = "cluster";
