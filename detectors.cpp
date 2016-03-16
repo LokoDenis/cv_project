@@ -15,14 +15,14 @@ int main() {
     Mat sec_src = imread("/home/oracle/Project/Images/exam.jpg", CV_LOAD_IMAGE_GRAYSCALE);
     Mat third_src = imread("/home/oracle/Project/Images/4th2.jpg", CV_LOAD_IMAGE_UNCHANGED);
     Ptr<Feature2D> f2d = SURF::create(1000, 1, 2, 1, 0);
-    Ptr<Feature2D> f2d_sift = SIFT::create(0, 4, 0.3 , 10, 1.6); //  trying cycles
+    Ptr<Feature2D> f2d_sift = SIFT::create(0, 3, 0.18, 5, 1.6); //  trying cycles
     // Setup SimpleBlobDetector parameters.
     SimpleBlobDetector::Params params;
 
     //rotating pictures
     cv::Mat src_rotated;
     cv::Point2d src_center(src.cols * 0.5, src.rows * 0.5); // defining a center of the source picture
-    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 80 , 1);  // creating a rotation matrix
+    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 20 , 1);  // creating a rotation matrix
     warpAffine(src, src_rotated, rot_mat, src.size());
 
     cv::Mat sec_src_rotated;
@@ -59,13 +59,12 @@ int main() {
 
     Ptr<SimpleBlobDetector> blobe_detector = SimpleBlobDetector::create(params);
 
-    // inverting colors
-//
+     //inverting colors
 //    for (size_t i = 0; i != third_src_rotated.rows; ++i) {
 //        for (size_t j = 0; j != third_src_rotated.cols; ++ j) {
-//            third_src_rotated.at<cv::Vec3b>(i, j)[0] = static_cast<uchar> (third_src_rotated.at<cv::Vec3b>(i, j)[0] + 1);
-//            third_src_rotated.at<cv::Vec3b>(i, j)[1] = static_cast<uchar> (third_src_rotated.at<cv::Vec3b>(i, j)[1] + 1);
-//            third_src_rotated.at<cv::Vec3b>(i, j)[2] = static_cast<uchar>  (third_src_rotated.at<cv::Vec3b>(i, j)[2] + 1);
+//            third_src_rotated.at<cv::Vec3b>(i, j)[0] = static_cast<uchar> (255 - third_src_rotated.at<cv::Vec3b>(i, j)[0]);
+//            third_src_rotated.at<cv::Vec3b>(i, j)[1] = static_cast<uchar> (255 - third_src_rotated.at<cv::Vec3b>(i, j)[1]);
+//            third_src_rotated.at<cv::Vec3b>(i, j)[2] = static_cast<uchar>  (255 - third_src_rotated.at<cv::Vec3b>(i, j)[2]);
 //        }
 //    }
 
@@ -77,8 +76,8 @@ int main() {
     Mat sized_src_sift_one;
     Mat sized_src_sift_two;
 
-    resize(src, sized_src_one, Size(600, 600), 0, 0, INTER_LINEAR);
-    resize(src_rotated, sized_src_two, Size(600, 600), 0, 0, INTER_LINEAR);
+    resize(src, sized_src_one, Size(600, 800), 0, 0, INTER_LINEAR);
+    resize(src_rotated, sized_src_two, Size(600, 800), 0, 0, INTER_LINEAR);
     resize(sec_src, sized_src_blobe_one, Size(600, 600), 0, 0, INTER_LINEAR);
     resize(sec_src_rotated, sized_src_blobe_two, Size(600, 600), 0, 0, INTER_LINEAR);
     resize(third_src, sized_src_sift_one, Size(600, 800), 0, 0, INTER_LINEAR);
