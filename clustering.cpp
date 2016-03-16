@@ -55,5 +55,7 @@ int main() {
     waitKey(0);
     destroyWindow(name);
 
+    imwrite("/home/oracle/ClionProjects/comvision/clusters/example.jpg", src);
+
 return 0;
 }
