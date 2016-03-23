@@ -1,12 +1,14 @@
 # README #
 
-This README would normally document whatever steps are necessary to get your application up and running.
-
-### OpenCV Amateur Project ###
+### LSWWC Project ###
 
 * This is the project based on The OPENCV library. Supporting by Denis Belyakov, 1st course student of the faculty of Computer Science, Higher School of Economics.
 
-* The aim of this project is to create a program (or maybe an application), which will be able to show images from a base looking the same to the inputed one. It involves doing research in the Computer Vision sphere and learning about basic operations with pictures. 
+* The aim of this project is to create a program (or maybe an application), which will be able to show images from a base looking the same to the inputted one. It involves doing research in the Computer Vision sphere and learning about basic operations with pictures. 
+
+* The informal idea of the "LSWWC" project is to learn about time-management, advanced usage of google and basic operations with UNIX-based OS, to develop social skills and the sense of responsibility, to create smth usable and make first steps in the mysterious and very interesting road called "Computer Vision".
+
+So, Let's SEE What We Can!
 
 Guided by Vadim Gorbachev.
 
@@ -24,5 +26,5 @@ Guided by Vadim Gorbachev.
 ### Who do I talk to? ###
 
 * The owner of this repo is alev.
-* Contact emails: lokodenis73@gmail.com
-		  dobelyakov@edu.hse.ru
+* Contact emails: lokodenis73@gmail.com 
+		  dobelyakov@edu.hse.ru  
