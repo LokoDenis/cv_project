@@ -8,11 +8,13 @@
 
 * The informal idea of the "LSWWC" project is to learn about time-management, advanced usage of google and basic operations with UNIX-based OS, to develop social skills and the sense of responsibility, to create smth usable and make first steps in the mysterious and very interesting road called "Computer Vision".
 
+* Current version 0.2
+
 So, Let's SEE What We Can!
 
 Guided by Vadim Gorbachev.
 
-* Current version 0.2
+
 
 
 ### About source files and directories ###
@@ -27,4 +29,4 @@ Guided by Vadim Gorbachev.
 
 * The owner of this repo is alev.
 * Contact emails: lokodenis73@gmail.com 
-		  dobelyakov@edu.hse.ru  
+		  dobelyakov@edu.hse.ru
