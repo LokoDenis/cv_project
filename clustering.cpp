@@ -37,7 +37,6 @@ int main() {
     // kmeans(InputArray data, int K, InputOutputArray bestLabels,
     // TermCriteria criteria, int attempts,
     // int flags, OutputArray centers=noArray())
-
     //show dotes of claster m;
     for (size_t i = 0; i != keys.size(); ++i) {
         for (int m = 0; m != K; ++m) {
@@ -48,8 +47,9 @@ int main() {
     }
 
     // creating visual words
-    std::vector<int> word (K, 0);
-    for (size_t i = 0; i != labels.size(); ++i) {
+    size_t i = 0;
+    while (i != labels.size()) {
+        std::vector<int> word (K, 0);
         ++word[labels[i]];
     }
 
