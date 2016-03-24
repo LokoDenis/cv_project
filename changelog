@@ -16,7 +16,7 @@ This program show the operation of image clustering using the k-mean method.
 - removed base_search.cpp and created base_creation.cpp instead.
 This program (currently untested) is supposed to create a library of visual words for pictures in specified folder.
 There is used a structure called "image", which contains a desctripor matrix and a visual words vector of each picture. 
-There are some functions, which make the process simplier: "TF_IDF", "base_walk", "to_visual_words" nd "save".
+There are some functions, which make the process simplier: "TF_IDF", "base_walk", "to_visual_words" and "save".
 
 
   
