@@ -23,7 +23,7 @@ Guided by Vadim Gorbachev.
 * detectors.cpp and "Detected_dotes" dir - includes examples of detectors' and descriptors' work plus matching.
 * clustering.cpp and "clusters" dir - includes examples of clustering on one image.
 * grads_and_etc.cpp and "Gradients" dir - shows the look of gradient vectors on pictures
-* base_creation.cpp - reads pictures from the specified folder and saves them as visual words. (CURRENTLY UNTESTED)
+* base_creation.cpp - reads pictures from the specified folder and saves them as visual words.
 
 **For the information related to the current progress consider looking through issues and changelog.txt **
 
