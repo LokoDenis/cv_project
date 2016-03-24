@@ -9,6 +9,10 @@
 #include <string>
 #include <vector>
 
+// Tasks:
+// add clusters' centres and save them
+// save data for calculating TF and IDF for a new picture
+
 using namespace cv;
 using namespace cv::xfeatures2d;
 
@@ -64,7 +68,7 @@ void to_visual_words(std::vector<image>& data, Mat& collection) {
     std::vector<int> labels(collection.rows);
     std::cout << "\nclustering begin\n";
     kmeans(collection, K, labels,
-           cvTermCriteria(CV_TERMCRIT_NUMBER + CV_TERMCRIT_EPS, 100, 1.0), 2, KMEANS_PP_CENTERS);
+           cvTermCriteria(CV_TERMCRIT_EPS, 500, 0.001), 1, KMEANS_PP_CENTERS);
     // kmeans(InputArray data, int K, InputOutputArray bestLabels,
     // TermCriteria criteria, int attempts,
     // int flags, OutputArray centers=noArray())
@@ -105,7 +109,7 @@ void save(std::string path, std::vector<image>& data) {
 }
 
 int main() {
-    int k = 10;
+    int k = 100;
     std::string path = "/home/oracle/Project/kinopoisk/";
     std::vector<image> data;  // vector of computed pictures
     Mat collection;  // matrix with all descriptors for kmeans
