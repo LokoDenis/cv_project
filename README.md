@@ -30,6 +30,5 @@ Guided by Vadim Gorbachev.
 ### Who do I talk to? ###
 
 * The owner of this repo is alev.
-* Contact emails: lokodenis73@gmail.com 
-
+* Contact emails: lokodenis73@gmail.com  
 		  dobelyakov@edu.hse.ru
