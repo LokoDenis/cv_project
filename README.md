@@ -31,4 +31,4 @@ Guided by Vadim Gorbachev.
 
 * The owner of this repo is alev.
 * Contact emails: 
-lokodenis73@gmail.com dobelyakov@edu.hse.ru
+lokodenis73@gmail.com, dobelyakov@edu.hse.ru
