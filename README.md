@@ -8,7 +8,7 @@
 
 * The informal idea of the "LSWWC" project is to learn about time-management, advanced usage of google and basic operations with UNIX-based OS, to develop social skills and the sense of responsibility, to create smth usable and make first steps in the mysterious and very interesting road called "Computer Vision".
 
-* Current version 0.2
+* Current version 0.25
 
 So, Let's SEE What We Can!
 
@@ -23,7 +23,7 @@ Guided by Vadim Gorbachev.
 * detectors.cpp and "Detected_dotes" dir - includes examples of detectors' and descriptors' work plus matching.
 * clustering.cpp and "clusters" dir - includes examples of clustering on one image.
 * grads_and_etc.cpp and "Gradients" dir - shows the look of gradient vectors on pictures
-* base_creation.cpp - reads pictures from the specified folder and saves them as visual words.
+* base_creation.cpp - reads pictures from the specified folder and saves them as visual words. Will be the main function soon. "data" directory includes examples of YAML files being saved.
 
 **For the information related to the current progress consider looking through issues and changelog.txt **
 
