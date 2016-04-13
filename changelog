@@ -26,3 +26,7 @@ added "menu" and some more functionality. Resolved problems with saving vactors,
           * added function for modifying the existing base with new pictures
           * completely reworked names of variables, functions and custom type to be more "human-friendly"
           * added some functions aiming on reading and operating with previously saved data
+
+- 14th April modified base_creation.cpp
+  bug fixes
+  
