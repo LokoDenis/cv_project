@@ -24,7 +24,7 @@ Guided by Vadim Gorbachev.
 * clustering.cpp and "clusters" dir - includes examples of clustering on one image.
 * grads_and_etc.cpp and "Gradients" dir - shows the look of gradient vectors on pictures
 
-**The main File**
+**The main file**
 base_creation.cpp
  
 * reads pictures from the specified folder and saves them as visual words
