@@ -33,7 +33,8 @@ int main() {
 
     int K = descriptor.rows / 80;
     std::vector<int> labels(descriptor.rows);
-    kmeans(descriptor, K, labels,  cvTermCriteria(CV_TERMCRIT_NUMBER + CV_TERMCRIT_EPS, 10000, 0.001), 10, KMEANS_PP_CENTERS);
+    Mat centers;
+    kmeans(descriptor, K, labels,  cvTermCriteria(CV_TERMCRIT_NUMBER + CV_TERMCRIT_EPS, 10000, 0.001), 10, KMEANS_PP_CENTERS, centers);
     // kmeans(InputArray data, int K, InputOutputArray bestLabels,
     // TermCriteria criteria, int attempts,
     // int flags, OutputArray centers=noArray())

@@ -38,7 +38,7 @@ void countMetric(std::string& path, std::vector<Image>& data, int K) {
     std::cout << "\nwrite begin";
     FileStorage fs_idf(path + "idf.yml", FileStorage::WRITE);
     fs_idf << "dots" << countNoZeros;
-    fs_idf << "size" << data.size();
+    fs_idf << "size" << static_cast<int>(data.size());
     fs_idf.release();
     std::cout << "\nwrite end";
 
@@ -83,17 +83,17 @@ void computeVisualWords(std::string& path, std::vector<Image>& data, Mat& cluste
     std::cout << "\nclusterig end'\n";
     std::cout << "\ncreating words begin:";
     // creating vectors of clusters' frequencies
-    int m = 0;  // just for printing
-    for (auto& elem : data) {
-        std::cout << m << " ";
-        std::vector<double> visualWord(K, 0);
+    unsigned int i = 0;  // creating vectors of clusters' frequencies
+    while (i < labels.size()) {
+        for (auto &elem : data) {
+            std::vector<double> visualWord(K, 0);
             for (size_t j = 0; j != elem.description.rows; ++j) {
-                ++visualWord[labels[j]];
+                ++visualWord[labels[i]];
+                ++i;
             }
-        elem.word = visualWord;
-        ++m;
+            elem.word = visualWord;
         }
-
+    }
     std::cout << "\ncreating words end";
     std::cout << "\n countMetric begin";
     countMetric(path, data, K);
@@ -161,7 +161,7 @@ void restoreMetric(std::string& path, Image& element, Mat& clusterCenters) {
     FileStorage fs_readIdf(path + "idf.yml", FileStorage::READ);
     std::vector<int> countNoZeros;
     int quantityOfImages;
-    fs_readIdf["dotes"] >> countNoZeros;
+    fs_readIdf["dots"] >> countNoZeros;
     fs_readIdf["size"] >> quantityOfImages;
     fs_readIdf.release();
 
@@ -171,17 +171,14 @@ void restoreMetric(std::string& path, Image& element, Mat& clusterCenters) {
     }
     ++quantityOfImages;
     for (size_t cluster = 0; cluster != element.word.size(); ++cluster) {
-        int delta = 0;
         if (element.word[cluster] != 0) {
-            delta = 1;
             countNoZeros[cluster] += 1;
         }
-        element.word[cluster] = element.word[cluster] / totalSum *
-                log((quantityOfImages) / (countNoZeros[cluster] + delta));
+        element.word[cluster] = (element.word[cluster] / totalSum) * log((quantityOfImages) / countNoZeros[cluster]);
     }
 
     FileStorage fs_writeIdf(path + "idf.yml", FileStorage::WRITE);
-    fs_writeIdf << "dotes" << countNoZeros;
+    fs_writeIdf << "dots" << countNoZeros;
     fs_writeIdf << "size" << quantityOfImages;
     fs_writeIdf.release();
 
@@ -191,7 +188,7 @@ int countEuclidesDistance (int a, int b) {
     return (a - b) * (a - b);
 }
 
-size_t findMinIndex(std::vector<int>& data) {
+size_t findMinIndex(std::vector<double>& data) {
     size_t min = 0;
     for (size_t i = 1; i != data.size(); ++i) {
         if (data[min] > data[i]) {
@@ -204,7 +201,7 @@ size_t findMinIndex(std::vector<int>& data) {
 void appendSource(std::string& path, Image& newElement) {
     FileStorage fs_read (path + "idf.yml", FileStorage::READ);
     int quantityOfElements = 0;
-    fs_read << "size" << quantityOfElements;
+    fs_read ["size"] >> quantityOfElements;
     fs_read.release();
 
     FileStorage fs_appendDescriptors (path + "descriptors.yml", FileStorage::APPEND);
@@ -219,11 +216,11 @@ void appendSource(std::string& path, Image& newElement) {
 void appendIndex(std::string& path, Image& newElement) {
     FileStorage fs_read (path + "idf.yml", FileStorage::READ);
     int quantityOfElements = 0;
-    fs_read << "size" << quantityOfElements;
+    fs_read ["size"] >> quantityOfElements;
     fs_read.release();
 
     // adding new element to the existing straight index
-    FileStorage fs_indexStraight (path + "IndexStraight.yml", FileStorage::APPEND);
+    FileStorage fs_indexStraight (path + "indexStraight.yml", FileStorage::APPEND);
     fs_indexStraight << "indexStraight " + std::to_string(quantityOfElements - 1) << newElement.word;
     fs_indexStraight.release();
 
@@ -233,7 +230,7 @@ void appendIndex(std::string& path, Image& newElement) {
     fs_clusterCenters.release();
 
     // adding new element to the existing inverted index
-    FileStorage fs_readIndexInverted (path + "IndexInverted.yml", FileStorage::READ);
+    FileStorage fs_readIndexInverted (path + "indexInverted.yml", FileStorage::READ);
     std::vector<std::vector<int>> indexInverted (clusterCenters.rows);
     for (size_t i = 0; i != indexInverted.size(); ++i) {
         fs_readIndexInverted ["indexInverted " + std::to_string(i)] >> indexInverted[i];
@@ -248,17 +245,15 @@ void appendIndex(std::string& path, Image& newElement) {
     fs_readIndexInverted.release();
 
     // writing changes to the existing inverted index
-    FileStorage fs_writeIndexInverted (path + "IndexInverted.yml", FileStorage::WRITE);
+    FileStorage fs_writeIndexInverted (path + "indexInverted.yml", FileStorage::WRITE);
     for (size_t i = 0; i != indexInverted.size(); ++i) {
-        for (size_t i = 0; i != indexInverted.size(); ++i) {
             fs_writeIndexInverted << "indexInverted " + std::to_string(i) << indexInverted[i];
-        }
     }
     fs_writeIndexInverted.release();
 }
 
-void restoreAVisualWord(std::string& storage, std::string& path, Image& newElement) {
-    Mat src = imread(path, CV_LOAD_IMAGE_UNCHANGED);  // reading Image and calculating its descriptor
+void restoreAVisualWord(std::string& source, std::string& path, Image& newElement) {
+    Mat src = imread(source, CV_LOAD_IMAGE_UNCHANGED);  // reading Image and calculating its descriptor
     resize(src, src, Size(600, 700), 0, 0, INTER_LINEAR);
     Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.18, 5, 1.6);
     Mat descriptor;
@@ -272,16 +267,18 @@ void restoreAVisualWord(std::string& storage, std::string& path, Image& newEleme
     fs_clusterCenters.release();
 
     int K = clusterCenters.rows;  // quantity of clusters
-    std::vector<int> labels (clusterCenters.rows);
-    std::vector<std::vector<int>> distances (descriptor.rows, std::vector<int> (clusterCenters.rows, 0));
+    std::vector<int> labels (descriptor.rows);
+    std::vector<std::vector<double>> distances (descriptor.rows, std::vector<double> (clusterCenters.rows, 0));
 
     for (size_t i = 0; i != descriptor.rows; ++i) {
         for (size_t j = 0; j != clusterCenters.rows; ++j) {
             int currentDistance = 0;
-            for (size_t z = 0; z != descriptor.cols; ++i) {  // counting using Euclides metric
-                currentDistance += countEuclidesDistance(descriptor.at(i, z), clusterCenters.at(j , z));
+            for (size_t z = 0; z != descriptor.cols; ++z) {  // counting using Euclides metric
+//                int temp = static_cast<int>(descriptor.at<uchar>(i, z));
+//                int temp2 = static_cast<int>(clusterCenters.at<uchar>(j , z));
+                currentDistance += countEuclidesDistance(static_cast<int>(descriptor.at<uchar>(i, z)), static_cast<int>(clusterCenters.at<uchar>(j , z)));
             }
-            distances[i][j] = currentDistance;
+            distances[i][j] = sqrt(currentDistance);
         }
     }
 
@@ -289,12 +286,17 @@ void restoreAVisualWord(std::string& storage, std::string& path, Image& newEleme
     for (size_t i = 0; i != labels.size(); ++i) {
         labels[i] = findMinIndex(distances[i]);
     }
-    std::vector<double> word(K, 0);
-    for (size_t j = 0; j != labels.size(); ++j) {
-        ++word[labels[j]];
-    }
-    newElement.word = word;
-    restoreMetric(storage, newElement, K);
+
+    unsigned int i = 0;  // creating vectors of clusters' frequencies
+    while (i < labels.size()) {
+            std::vector<double> visualWord(K, 0);
+            for (size_t j = 0; j != descriptor.rows; ++j) {
+                ++visualWord[labels[i]];
+                ++i;
+            }
+            newElement.word = visualWord;
+        }
+    restoreMetric(path, newElement, clusterCenters);
 }
 
 int main() {
@@ -315,23 +317,27 @@ int main() {
                 std::vector<Image> data;  // vector of computed pictures
                 Mat clusterCenters;
                 Mat collection;  // matrix with all descriptors for kmeans
-                std::map<int, std::vector<double>> indexStraight;
-                std::vector<std::vector<int>> indexInverted (clusterCenters.rows);
                 createABase(storage, k, data, collection);  // creating straight and inverted index dictionaries
                 computeVisualWords(path, data, clusterCenters, collection);
+                std::map<int, std::vector<double>> indexStraight;
+                std::vector<std::vector<int>> indexInverted (clusterCenters.rows);
                 calculateIndex(indexStraight, indexInverted, data);
                 saveData(path, data, clusterCenters, indexStraight, indexInverted);
                 break;
             }
             case 2: {
-                std::string source = "path to the image";  // path to the Image
+                std::string source = storage + "632.jpg";  // path to the Image
                 Image addingImage;
-                restoreAVisualWord(storage, source, addingImage);  // calculate tf-idf for the current
-                appendSource(storage, addingImage);  // append data
-                appendIndex(storage, addingImage);  // append indexes
+                restoreAVisualWord(source, path, addingImage);  // calculate tf-idf for the current
+                appendSource(path, addingImage);  // append data
+                appendIndex(path, addingImage);  // append indexes
                 break;
             }
-            case 3: break;
+            case 3: {
+                
+
+            }
+                break;
 
             case 4: break;
             default:
