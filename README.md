@@ -25,9 +25,12 @@ Guided by Vadim Gorbachev.
 * grads_and_etc.cpp and "Gradients" dir - shows the look of gradient vectors on pictures
 
 **The main File**
-base_creation.cpp 
-* reads pictures from the specified folder and saves them as visual 
+base_creation.cpp
+ 
+* reads pictures from the specified folder and saves them as visual words
+
 * adds new images to the existing base
+
 * "data" directory includes examples of YAML files being saved.
 
 ** For more detailed information related to the current progress consider looking through issues and changelog.txt **
