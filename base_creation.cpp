@@ -8,11 +8,15 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include "opencv2/xfeatures2d.hpp"
+#include <set>
 #include <string>
 #include <vector>
+#include <values.h>
 
 // Current Task: 1) get to know how FileStorage::APPEND works.
 //               2) search for an image.
+//               3) custom clustering CHECK AGAIN
+//               4) somehow save paths or rename pictures in the folder
 
 using namespace cv;
 using namespace cv::xfeatures2d;
@@ -165,10 +169,7 @@ void restoreMetric(std::string& path, Image& element, Mat& clusterCenters) {
     fs_readIdf["size"] >> quantityOfImages;
     fs_readIdf.release();
 
-    int totalSum = 0;
-    for (auto& elem : element.word) {
-        totalSum += elem;
-    }
+    int totalSum = element.description.rows;
     ++quantityOfImages;
     for (size_t cluster = 0; cluster != element.word.size(); ++cluster) {
         if (element.word[cluster] != 0) {
@@ -184,7 +185,7 @@ void restoreMetric(std::string& path, Image& element, Mat& clusterCenters) {
 
 }
 
-int countEuclidesDistance (int a, int b) {
+double countEuclidesDistance (double a, double b) {
     return (a - b) * (a - b);
 }
 
@@ -278,7 +279,7 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
 //                int temp2 = static_cast<int>(clusterCenters.at<uchar>(j , z));
                 currentDistance += countEuclidesDistance(static_cast<int>(descriptor.at<uchar>(i, z)), static_cast<int>(clusterCenters.at<uchar>(j , z)));
             }
-            distances[i][j] = sqrt(currentDistance);
+            distances[i][j] = currentDistance;
         }
     }
 
@@ -297,6 +298,73 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
             newElement.word = visualWord;
         }
     restoreMetric(path, newElement, clusterCenters);
+}
+
+void addAPicture (std::string& source, std::string& path) {
+    Image addingImage;
+    restoreAVisualWord(source, path, addingImage);  // calculate tf-idf for the current
+    appendSource(path, addingImage);  // append data
+    appendIndex(path, addingImage);  // append indexes
+}
+
+int searchInBase (std::string& path, Image& newElement) {
+    FileStorage fs_read (path + "idf.yml", FileStorage::READ);
+    int quantityOfElements = 0;
+    fs_read ["size"] >> quantityOfElements;
+    fs_read.release();
+
+    FileStorage fs_readWords (path + "words.yml", FileStorage::READ);
+    FileStorage fs_readInvertedIndex (path + "indexInverted.yml", FileStorage::READ);
+    FileStorage fs_readStraightIndex (path + "indexStraight.yml", FileStorage::READ);
+
+    std::set<int> candidates;  // we will find out during iterating through the base
+
+    for (size_t i = 0; i != newElement.word.size(); ++i) {
+        if (newElement.word[i] != 0) {
+            std::vector<int> curr;
+            fs_readInvertedIndex["indexInverted " + std::to_string(i)] >> curr;
+            for (auto& elem : curr) {
+            candidates.insert(elem);
+            }
+        }
+    }
+
+    fs_readInvertedIndex.release();
+
+    int minIndex;
+    double minValue;
+    bool first = true;
+    for (auto& elem : candidates) {
+        std::vector<double> word;
+        double currentDistance = 0;
+        fs_readStraightIndex["indexStraight " + std::to_string(elem)] >> word;
+        for (size_t j = 0; j != word.size(); ++j) {
+            currentDistance += countEuclidesDistance(newElement.word[j], word[j]);
+        }
+        if (first) {
+            minIndex = elem;
+            minValue = currentDistance;
+            first = false;
+        } else {
+            if (currentDistance < minValue) {
+                minValue = currentDistance;
+                minIndex = elem;
+            }
+        }
+    }
+    fs_readStraightIndex.release();
+    return minIndex;
+}
+
+void visualize (std::string storage, int number, std::string source) {
+    Mat best = imread(storage + std::to_string(number) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);
+    Mat img = imread(source, CV_LOAD_IMAGE_UNCHANGED);
+    namedWindow("initial", CV_WINDOW_AUTOSIZE);
+    namedWindow("best", CV_WINDOW_AUTOSIZE);
+    imshow("initial", img);
+    imshow("best", best);
+    waitKey(0);
+    destroyAllWindows();
 }
 
 int main() {
@@ -327,15 +395,15 @@ int main() {
             }
             case 2: {
                 std::string source = storage + "632.jpg";  // path to the Image
-                Image addingImage;
-                restoreAVisualWord(source, path, addingImage);  // calculate tf-idf for the current
-                appendSource(path, addingImage);  // append data
-                appendIndex(path, addingImage);  // append indexes
+                addAPicture(source, path);
                 break;
             }
             case 3: {
-                
-
+                std::string source = storage + "316.jpg";  // path to the image
+                Image currentPicture;
+                restoreAVisualWord(source, path, currentPicture);
+                int nearest = searchInBase(path, currentPicture);
+                visualize(storage, nearest, source);
             }
                 break;
 
