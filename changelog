@@ -18,8 +18,8 @@ This program (currently untested) is supposed to create a library of visual word
 There is used a structure called "image", which contains a desctripor matrix and a visual words vector of each picture. 
 There are some functions, which make the process simplier: "TF_IDF", "base_walk", "to_visual_words" and "save".
 
-- 12th April modified base_search.cpp
-added "menu" and some more functionality. Resolved problems with saving vactors, matrices and etc. Base creating works properly. 
+- 12th April modified base_creation.cpp
+added "menu" and some more functionality. Resolved problems with saving vectors, matrices and etc. Base creating works properly. 
 
 - 13th April modified base_creation.cpp
   changes:
@@ -28,7 +28,7 @@ added "menu" and some more functionality. Resolved problems with saving vactors,
           * added some functions aiming on reading and operating with previously saved data
 
 - 14th April modified base_creation.cpp
-  bug fixes, but still doesn't work
+  bugs related to type mistakes fixed, but still the search doesn't work properly
   
 - 15th April modified base_creation.cpp
   changes:
