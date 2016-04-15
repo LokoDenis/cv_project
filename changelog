@@ -28,5 +28,14 @@ added "menu" and some more functionality. Resolved problems with saving vactors,
           * added some functions aiming on reading and operating with previously saved data
 
 - 14th April modified base_creation.cpp
-  bug fixes
+  bug fixes, but still doesn't work
   
+- 15th April modified base_creation.cpp
+  changes:
+	  * image search now WORKS YAY
+	  * finally decided on the structure for images folder
+	  * rewrited descriptor calculation. now it uses float types as in kmeans thus iterators.
+  future enhancements:
+	  * rewrite adding an image with the usage of iterators so as to have an opportunity to add pictures with different names
+  	  * work on clustering to optimise the search
+

@@ -15,8 +15,8 @@
 
 // Current Task: 1) get to know how FileStorage::APPEND works.
 //               2) search for an image.
-//               3) custom clustering CHECK AGAIN
-//               4) somehow save paths or rename pictures in the folder
+//               3) manual clustering CHECK AGAIN
+//
 
 using namespace cv;
 using namespace cv::xfeatures2d;
@@ -39,12 +39,10 @@ void countMetric(std::string& path, std::vector<Image>& data, int K) {
         }
     }
 
-    std::cout << "\nwrite begin";
     FileStorage fs_idf(path + "idf.yml", FileStorage::WRITE);
     fs_idf << "dots" << countNoZeros;
     fs_idf << "size" << static_cast<int>(data.size());
     fs_idf.release();
-    std::cout << "\nwrite end";
 
     for (size_t picture = 0; picture != data.size(); ++picture) {
         for (size_t cluster = 0; cluster != data[picture].word.size(); ++cluster) {
@@ -55,11 +53,8 @@ void countMetric(std::string& path, std::vector<Image>& data, int K) {
 
 // walking through the source, reading raw data for further clustering
 void createABase(std::string& path, int n, std::vector<Image>& data, Mat& collection) {
-        n += 298;
-        std::cout << "createABase() begin";
-        for (size_t i = 298; i != n; ++i) {
-            std::cout << "\n" << i;
-        Mat src = imread(path + std::to_string(i) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);
+    for (size_t i = 0; i != n; ++i) {
+        Mat src = imread(path + std::to_string(i + 1) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);  // +1 'cause of the images names
         if (src.empty()) continue;
         Image newElement;
         resize(src, src, Size(600, 700), 0, 0, INTER_LINEAR);
@@ -71,21 +66,17 @@ void createABase(std::string& path, int n, std::vector<Image>& data, Mat& collec
         data.push_back(newElement);
         collection.push_back(descriptor);
     }
-    std::cout << "\ncreateABase() end \n";
 }
 
 // creating visual words for pictures using clustering and TF-IDF metric
 void computeVisualWords(std::string& path, std::vector<Image>& data, Mat& clusterCenters, Mat& collection) {
     int K = collection.rows / 80;
     std::vector<int> labels(collection.rows);
-    std::cout << "\nclustering begin\n";
     kmeans(collection, K, labels,
            cvTermCriteria(CV_TERMCRIT_EPS, 500, 0.001), 1, KMEANS_PP_CENTERS, clusterCenters);
     // kmeans(InputArray data, int K, InputOutputArray bestLabels,
     // TermCriteria criteria, int attempts,
     // int flags, OutputArray clusterCenters=noArray())
-    std::cout << "\nclusterig end'\n";
-    std::cout << "\ncreating words begin:";
     // creating vectors of clusters' frequencies
     unsigned int i = 0;  // creating vectors of clusters' frequencies
     while (i < labels.size()) {
@@ -98,16 +89,12 @@ void computeVisualWords(std::string& path, std::vector<Image>& data, Mat& cluste
             elem.word = visualWord;
         }
     }
-    std::cout << "\ncreating words end";
-    std::cout << "\n countMetric begin";
     countMetric(path, data, K);
-    std::cout << "\n countMetric end";
 }
 
 // saving data of descriptors, clusters' clusterCenters, words (counted with the usage of TF-IDF metric) and dicts to the user's path
 void saveData(std::string& path, std::vector<Image>& data, Mat& clusterCenters, std::map<int, std::vector<double>>& indexStraight,
           std::vector<std::vector<int>>& indexInverted) {
-    std::cout << "\nsave begin";
     FileStorage fs_description(path + "descriptors.yml", FileStorage::WRITE);
     FileStorage fs_words(path + "words.yml", FileStorage::WRITE);
     FileStorage fs_clusterCenters(path + "clusterCenters.yml", FileStorage::WRITE);
@@ -135,7 +122,6 @@ void saveData(std::string& path, std::vector<Image>& data, Mat& clusterCenters, 
             fs_indexInverted << "indexInverted " + std::to_string(i) << indexInverted[i];
         }
         fs_indexInverted.release();
-        std::cout << "\n save end";
     }
 
 void calculateInverdedIndex(std::vector<std::vector<int>>& inverted,
@@ -161,7 +147,7 @@ void calculateIndex(std::map<int, std::vector<double>>& straight, std::vector<st
     calculateInverdedIndex(inverted, data);
 }
 
-void restoreMetric(std::string& path, Image& element, Mat& clusterCenters) {
+void restoreMetric(std::string& path, Image& element, bool trigger) {
     FileStorage fs_readIdf(path + "idf.yml", FileStorage::READ);
     std::vector<int> countNoZeros;
     int quantityOfImages;
@@ -178,14 +164,15 @@ void restoreMetric(std::string& path, Image& element, Mat& clusterCenters) {
         element.word[cluster] = (element.word[cluster] / totalSum) * log((quantityOfImages) / countNoZeros[cluster]);
     }
 
-    FileStorage fs_writeIdf(path + "idf.yml", FileStorage::WRITE);
-    fs_writeIdf << "dots" << countNoZeros;
-    fs_writeIdf << "size" << quantityOfImages;
-    fs_writeIdf.release();
-
+    if (trigger) {
+        FileStorage fs_writeIdf(path + "idf.yml", FileStorage::WRITE);
+        fs_writeIdf << "dots" << countNoZeros;
+        fs_writeIdf << "size" << quantityOfImages;
+        fs_writeIdf.release();
+    }
 }
 
-double countEuclidesDistance (double a, double b) {
+float countEuclidesDistance (float a, float b) {
     return (a - b) * (a - b);
 }
 
@@ -268,18 +255,16 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
     fs_clusterCenters.release();
 
     int K = clusterCenters.rows;  // quantity of clusters
-    std::vector<int> labels (descriptor.rows);
-    std::vector<std::vector<double>> distances (descriptor.rows, std::vector<double> (clusterCenters.rows, 0));
+    std::vector<int> labels(descriptor.rows);
+    std::vector<std::vector<double>> distances(descriptor.rows, std::vector<double>(clusterCenters.rows, 0));
 
-    for (size_t i = 0; i != descriptor.rows; ++i) {
-        for (size_t j = 0; j != clusterCenters.rows; ++j) {
-            int currentDistance = 0;
-            for (size_t z = 0; z != descriptor.cols; ++z) {  // counting using Euclides metric
-//                int temp = static_cast<int>(descriptor.at<uchar>(i, z));
-//                int temp2 = static_cast<int>(clusterCenters.at<uchar>(j , z));
-                currentDistance += countEuclidesDistance(static_cast<int>(descriptor.at<uchar>(i, z)), static_cast<int>(clusterCenters.at<uchar>(j , z)));
-            }
-            distances[i][j] = currentDistance;
+    double currentDistance = 0;
+    for (size_t j = 0; j != descriptor.rows; ++j) {
+        float *currentDot = descriptor.ptr<float>(j);
+        for (size_t i = 0; i != clusterCenters.rows; ++i) {
+            float *currentRow = clusterCenters.ptr<float>(i);
+            currentDistance = normL2Sqr(currentDot, currentRow, descriptor.cols);
+            distances[j][i] = currentDistance;
         }
     }
 
@@ -290,24 +275,16 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
 
     unsigned int i = 0;  // creating vectors of clusters' frequencies
     while (i < labels.size()) {
-            std::vector<double> visualWord(K, 0);
-            for (size_t j = 0; j != descriptor.rows; ++j) {
-                ++visualWord[labels[i]];
-                ++i;
-            }
-            newElement.word = visualWord;
+        std::vector<double> visualWord(K, 0);
+        for (size_t j = 0; j != descriptor.rows; ++j) {
+            ++visualWord[labels[i]];
+            ++i;
         }
-    restoreMetric(path, newElement, clusterCenters);
+        newElement.word = visualWord;
+    }
 }
 
-void addAPicture (std::string& source, std::string& path) {
-    Image addingImage;
-    restoreAVisualWord(source, path, addingImage);  // calculate tf-idf for the current
-    appendSource(path, addingImage);  // append data
-    appendIndex(path, addingImage);  // append indexes
-}
-
-int searchInBase (std::string& path, Image& newElement) {
+int searchInBase(std::string& path, Image& newElement) {
     FileStorage fs_read (path + "idf.yml", FileStorage::READ);
     int quantityOfElements = 0;
     fs_read ["size"] >> quantityOfElements;
@@ -357,14 +334,16 @@ int searchInBase (std::string& path, Image& newElement) {
 }
 
 void visualize (std::string storage, int number, std::string source) {
-    Mat best = imread(storage + std::to_string(number) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);
+    Mat best = imread(storage + std::to_string(number + 1) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);  // +1 'cause of the storage
     Mat img = imread(source, CV_LOAD_IMAGE_UNCHANGED);
     namedWindow("initial", CV_WINDOW_AUTOSIZE);
-    namedWindow("best", CV_WINDOW_AUTOSIZE);
     imshow("initial", img);
+    waitKey(0);
+    destroyWindow("initial");
+    namedWindow("best", CV_WINDOW_AUTOSIZE);
     imshow("best", best);
     waitKey(0);
-    destroyAllWindows();
+    destroyWindow("best");
 }
 
 int main() {
@@ -381,7 +360,9 @@ int main() {
         std::cin >> choice;
         switch (choice) {
             case 1: {
-                int k = 150;  // approximate number of pictures in the base
+                int k;  // approximate number of pictures in the base
+                std::cout << "\nHow many pictures: ";
+                std::cin >> k;
                 std::vector<Image> data;  // vector of computed pictures
                 Mat clusterCenters;
                 Mat collection;  // matrix with all descriptors for kmeans
@@ -391,17 +372,30 @@ int main() {
                 std::vector<std::vector<int>> indexInverted (clusterCenters.rows);
                 calculateIndex(indexStraight, indexInverted, data);
                 saveData(path, data, clusterCenters, indexStraight, indexInverted);
+                std::cout << "\nDone!";
                 break;
             }
             case 2: {
-                std::string source = storage + "632.jpg";  // path to the Image
-                addAPicture(source, path);
+                int num;
+                std::cout << "\nPicture's number: ";
+                std::cin >> num;
+                std::string source = storage + std::to_string(num) + ".jpg";  // path to the Image
+                Image addingImage;
+                restoreAVisualWord(source, path, addingImage);  // calculate tf-idf for the current
+                restoreMetric(path, addingImage, true);
+                appendSource(path, addingImage);  // append data
+                appendIndex(path, addingImage);  // append indexes
+                std::cout << "\nDone! ";
                 break;
             }
             case 3: {
-                std::string source = storage + "316.jpg";  // path to the image
+                int num;
+                std::cout << "\nPicture's number: ";
+                std::cin >> num;
+                std::string source = storage + std::to_string(num) + ".jpg";  // path to the image
                 Image currentPicture;
                 restoreAVisualWord(source, path, currentPicture);
+                restoreMetric(path, currentPicture, false);
                 int nearest = searchInBase(path, currentPicture);
                 visualize(storage, nearest, source);
             }
