@@ -33,6 +33,8 @@ base_creation.cpp
 
 * "data" directory includes examples of YAML files being saved.
 
+* capable of searching for images through the base
+
 ** For more detailed information related to the current progress consider looking through issues and changelog.txt **
 
 ### Who do I talk to? ###
