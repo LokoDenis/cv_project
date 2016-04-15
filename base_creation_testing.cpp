@@ -186,57 +186,42 @@ size_t findMinIndex(std::vector<double>& data) {
     return min;
 }
 
-void appendSource(std::string& path, Image& newElement) {
+void appendSource(std::string& path, Image& newElement, int name) {
     FileStorage fs_read (path + "idf.yml", FileStorage::READ);
-    int quantityOfElements = 0;
-    fs_read ["size"] >> quantityOfElements;
-    fs_read.release();
 
     FileStorage fs_appendDescriptors (path + "descriptors.yml", FileStorage::APPEND);
     FileStorage fs_appendWords (path + "words.yml", FileStorage::APPEND);
 
-    fs_appendDescriptors << "data_" + std::to_string(quantityOfElements - 1) + "_description" << newElement.description;
-    fs_appendWords << "data_" + std::to_string(quantityOfElements - 1) + "_word" << newElement.word;
+    fs_appendDescriptors << "data_" + std::to_string(name - 1) + "_description" << newElement.description;
+    fs_appendWords << "data_" + std::to_string(name - 1) + "_word" << newElement.word;
     fs_appendDescriptors.release();
     fs_appendWords.release();
 }
 
-void appendIndex(std::string& path, Image& newElement) {
+void appendIndex(std::string& path, Image& newElement, int name) {
     FileStorage fs_read (path + "idf.yml", FileStorage::READ);
-    int quantityOfElements = 0;
-    fs_read ["size"] >> quantityOfElements;
-    fs_read.release();
 
     // adding new element to the existing straight index
     FileStorage fs_indexStraight (path + "indexStraight.yml", FileStorage::APPEND);
-    fs_indexStraight << "indexStraight " + std::to_string(quantityOfElements - 1) << newElement.word;
+    fs_indexStraight << "indexStraight " + std::to_string(name - 1) << newElement.word;
     fs_indexStraight.release();
 
-    Mat clusterCenters;
-    FileStorage fs_clusterCenters(path + "clusterCenters.yml", FileStorage::READ);
-    fs_clusterCenters["clusterCenters"] >> clusterCenters;
-    fs_clusterCenters.release();
-
-    // adding new element to the existing inverted index
+    // Reading the existing inverted index
     FileStorage fs_readIndexInverted (path + "indexInverted.yml", FileStorage::READ);
-    std::vector<std::vector<int>> indexInverted (clusterCenters.rows);
-    for (size_t i = 0; i != indexInverted.size(); ++i) {
-        fs_readIndexInverted ["indexInverted " + std::to_string(i)] >> indexInverted[i];
-    }
-
-    for (size_t j = 0; j != newElement.word.size(); ++j) {
-        if (newElement.word[j] > 0) {
-            indexInverted[j].push_back(quantityOfElements - 1);
+    std::vector<std::vector<int>> wholeData (newElement.word.size());
+    for (size_t i = 0; i != wholeData.size(); ++ i) {
+        fs_readIndexInverted ["indexInverted " + std::to_string(i)] >> wholeData[i];
+        if (newElement.word[i] > 0) {
+            wholeData[i].push_back(name - 1);
         }
     }
-
     fs_readIndexInverted.release();
 
-    // writing changes to the existing inverted index
+    // Writing the new inverted index. Can't figure out how to do this more effectively
     FileStorage fs_writeIndexInverted (path + "indexInverted.yml", FileStorage::WRITE);
-    for (size_t i = 0; i != indexInverted.size(); ++i) {
-        fs_writeIndexInverted << "indexInverted " + std::to_string(i) << indexInverted[i];
-    }
+    for (size_t i = 0; i != wholeData.size(); ++i) {
+            fs_writeIndexInverted << "indexInverted " + std::to_string(i) << wholeData[i];
+        }
     fs_writeIndexInverted.release();
 }
 
@@ -244,11 +229,11 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
     Mat src = imread(source, CV_LOAD_IMAGE_UNCHANGED);  // reading Image and calculating its descriptor
     resize(src, src, Size(600, 700), 0, 0, INTER_LINEAR);
 
-    cv::Point2d src_center(src.cols * 0.5, src.rows * 0.5); // defining a center of the source picture
-    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 50 , 1);  // creating a rotation matrix
-    warpAffine(src, src, rot_mat, src.size());
-    GaussianBlur(src, src, Size(3,3), 7, 7, BORDER_DEFAULT);
-    medianBlur(src, src, 5);
+//    cv::Point2d src_center(src.cols * 0.5, src.rows * 0.5); // defining a center of the source picture
+//    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 50 , 1);  // creating a rotation matrix
+//    warpAffine(src, src, rot_mat, src.size());
+//    GaussianBlur(src, src, Size(3,3), 7, 7, BORDER_DEFAULT);
+//    medianBlur(src, src, 5);
 
     Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.18, 5, 1.6);
     Mat descriptor;
@@ -292,17 +277,14 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
 }
 
 int searchInBase(std::string& path, Image& newElement) {
-    FileStorage fs_read (path + "idf.yml", FileStorage::READ);
-    int quantityOfElements = 0;
-    fs_read ["size"] >> quantityOfElements;
-    fs_read.release();
-
     FileStorage fs_readWords (path + "words.yml", FileStorage::READ);
     FileStorage fs_readInvertedIndex (path + "indexInverted.yml", FileStorage::READ);
-    FileStorage fs_readStraightIndex (path + "indexStraight.yml", FileStorage::READ);
 
     std::set<int> candidates;  // we will find out during iterating through the base
+    std::set<int> best;
+    std::set<int> intersect;
 
+    bool firstTime = true;
     for (size_t i = 0; i != newElement.word.size(); ++i) {
         if (newElement.word[i] != 0) {
             std::vector<int> curr;
@@ -310,15 +292,27 @@ int searchInBase(std::string& path, Image& newElement) {
             for (auto& elem : curr) {
                 candidates.insert(elem);
             }
+            if (firstTime) {
+                best = candidates;
+                firstTime = false;
+            } else {
+                std::set_intersection(curr.begin(), curr.end(), best.begin(), best.end(), std::inserter(intersect, intersect.begin()));
+                best = intersect;
+                intersect.clear();
+            }
         }
     }
-
     fs_readInvertedIndex.release();
 
+    FileStorage fs_readStraightIndex (path + "indexStraight.yml", FileStorage::READ);
     int minIndex;
     double minValue;
     bool first = true;
-    for (auto& elem : candidates) {
+    if (best.empty()) {
+        best = candidates;
+        std::cout << " not best ";
+    }
+    for (auto& elem : best) {
         std::vector<double> word;
         double currentDistance = 0;
         fs_readStraightIndex["indexStraight " + std::to_string(elem)] >> word;
@@ -390,31 +384,31 @@ int main() {
                 Image addingImage;
                 restoreAVisualWord(source, path, addingImage);  // calculate tf-idf for the current
                 restoreMetric(path, addingImage, true);
-                appendSource(path, addingImage);  // append data
-                appendIndex(path, addingImage);  // append indexes
+                appendSource(path, addingImage, num);  // append data
+                appendIndex(path, addingImage, num);  // append indexes
                 std::cout << "\nDone! ";
                 break;
             }
             case 3: {
-//                int num;
-//                std::cout << "\nPicture's number: ";
-//                std::cin >> num;
+                int num;
+                std::cout << "\nQuantity: ";
+                std::cin >> num;
                 double count = 0;
-                for (int num = 1; num != 102; ++ num) {
-                    std::string source = storage + std::to_string(num) + ".jpg";  // path to the image
+                for (int i = 1; i != num + 1; ++i) {
+                    std::string source = storage + std::to_string(i) + ".jpg";  // path to the image
                     Image currentPicture;
                     restoreAVisualWord(source, path, currentPicture);
                     restoreMetric(path, currentPicture, false);
                     int nearest = searchInBase(path, currentPicture);
-                    if (nearest + 1 == num) {
+                    if (nearest + 1 == i) {
                         ++count;
-                        std::cout << "Picture " << num << ": True \n";
+                        std::cout << "Picture " << i << ": True \n";
                     } else {
-                        std::cout << "Picture " << num << ": False \n";
+                        std::cout << "Picture " << i << ": False \n";
                     }
                     //visualize(storage, nearest, source);
                 }
-                std::cout << "Accuracy " << count/101 * 100 << " %";
+                std::cout << "Accuracy " << count/num * 100 << " %";
             }
                 break;
 
