@@ -14,11 +14,11 @@ find_package(OpenCV REQUIRED)
 #set(SOURCE_FILES detectors.cpp)
 #add_executable(comvision ${SOURCE_FILES})
 
-#set(SOURCE_FILES base_creation.cpp)
-#add_executable(comvision ${SOURCE_FILES})
-
-set(SOURCE_FILES test.cpp)
+set(SOURCE_FILES base_creation.cpp)
 add_executable(comvision ${SOURCE_FILES})
+
+#set(SOURCE_FILES test.cpp)
+#add_executable(comvision ${SOURCE_FILES})
 
 #set(SOURCE_FILES clustering.cpp)
 #add_executable(comvision ${SOURCE_FILES})

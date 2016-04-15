@@ -94,7 +94,7 @@ void computeVisualWords(std::string& path, std::vector<Image>& data, Mat& cluste
 
 // saving data of descriptors, clusters' clusterCenters, words (counted with the usage of TF-IDF metric) and dicts to the user's path
 void saveData(std::string& path, std::vector<Image>& data, Mat& clusterCenters, std::map<int, std::vector<double>>& indexStraight,
-          std::vector<std::vector<int>>& indexInverted) {
+              std::vector<std::vector<int>>& indexInverted) {
     FileStorage fs_description(path + "descriptors.yml", FileStorage::WRITE);
     FileStorage fs_words(path + "words.yml", FileStorage::WRITE);
     FileStorage fs_clusterCenters(path + "clusterCenters.yml", FileStorage::WRITE);
@@ -106,23 +106,23 @@ void saveData(std::string& path, std::vector<Image>& data, Mat& clusterCenters, 
         fs_words << "data_" + std::to_string(i) + "_word" << elem.word;
         ++i;
     }
-        fs_description.release();
-        fs_words.release();
+    fs_description.release();
+    fs_words.release();
 
-        fs_clusterCenters << "clusterCenters" << clusterCenters;
-        fs_clusterCenters.release();
+    fs_clusterCenters << "clusterCenters" << clusterCenters;
+    fs_clusterCenters.release();
 
-        i = 0;
-        for (auto &elem : indexStraight) {
-            fs_indexStraight << "indexStraight " + std::to_string(i++) << elem.second;
-        }
-        fs_indexStraight.release();
-
-        for (size_t i = 0; i != indexInverted.size(); ++i) {
-            fs_indexInverted << "indexInverted " + std::to_string(i) << indexInverted[i];
-        }
-        fs_indexInverted.release();
+    i = 0;
+    for (auto &elem : indexStraight) {
+        fs_indexStraight << "indexStraight " + std::to_string(i++) << elem.second;
     }
+    fs_indexStraight.release();
+
+    for (size_t i = 0; i != indexInverted.size(); ++i) {
+        fs_indexInverted << "indexInverted " + std::to_string(i) << indexInverted[i];
+    }
+    fs_indexInverted.release();
+}
 
 void calculateInverdedIndex(std::vector<std::vector<int>>& inverted,
                             std::vector<Image>& data) {
@@ -142,7 +142,7 @@ void calculateStraightIndex(std::map<int, std::vector<double>>& straight, std::v
 }
 
 void calculateIndex(std::map<int, std::vector<double>>& straight, std::vector<std::vector<int>>& inverted,
-                       std::vector<Image>& data) {
+                    std::vector<Image>& data) {
     calculateStraightIndex(straight, data);
     calculateInverdedIndex(inverted, data);
 }
@@ -235,7 +235,7 @@ void appendIndex(std::string& path, Image& newElement) {
     // writing changes to the existing inverted index
     FileStorage fs_writeIndexInverted (path + "indexInverted.yml", FileStorage::WRITE);
     for (size_t i = 0; i != indexInverted.size(); ++i) {
-            fs_writeIndexInverted << "indexInverted " + std::to_string(i) << indexInverted[i];
+        fs_writeIndexInverted << "indexInverted " + std::to_string(i) << indexInverted[i];
     }
     fs_writeIndexInverted.release();
 }
@@ -243,6 +243,12 @@ void appendIndex(std::string& path, Image& newElement) {
 void restoreAVisualWord(std::string& source, std::string& path, Image& newElement) {
     Mat src = imread(source, CV_LOAD_IMAGE_UNCHANGED);  // reading Image and calculating its descriptor
     resize(src, src, Size(600, 700), 0, 0, INTER_LINEAR);
+
+    cv::Point2d src_center(src.cols * 0.5, src.rows * 0.5); // defining a center of the source picture
+    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 50 , 1);  // creating a rotation matrix
+    warpAffine(src, src, rot_mat, src.size());
+    GaussianBlur(src, src, Size(3,3), 7, 7, BORDER_DEFAULT);
+    medianBlur(src, src, 5);
 
     Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.18, 5, 1.6);
     Mat descriptor;
@@ -302,7 +308,7 @@ int searchInBase(std::string& path, Image& newElement) {
             std::vector<int> curr;
             fs_readInvertedIndex["indexInverted " + std::to_string(i)] >> curr;
             for (auto& elem : curr) {
-            candidates.insert(elem);
+                candidates.insert(elem);
             }
         }
     }
@@ -390,20 +396,31 @@ int main() {
                 break;
             }
             case 3: {
-                int num;
-                std::cout << "\nPicture's number: ";
-                std::cin >> num;
-                std::string source = storage + std::to_string(num) + ".jpg";  // path to the image
-                Image currentPicture;
-                restoreAVisualWord(source, path, currentPicture);
-                restoreMetric(path, currentPicture, false);
-                int nearest = searchInBase(path, currentPicture);
-                visualize(storage, nearest, source);
-                break;
+//                int num;
+//                std::cout << "\nPicture's number: ";
+//                std::cin >> num;
+                double count = 0;
+                for (int num = 1; num != 102; ++ num) {
+                    std::string source = storage + std::to_string(num) + ".jpg";  // path to the image
+                    Image currentPicture;
+                    restoreAVisualWord(source, path, currentPicture);
+                    restoreMetric(path, currentPicture, false);
+                    int nearest = searchInBase(path, currentPicture);
+                    if (nearest + 1 == num) {
+                        ++count;
+                        std::cout << "Picture " << num << ": True \n";
+                    } else {
+                        std::cout << "Picture " << num << ": False \n";
+                    }
+                    //visualize(storage, nearest, source);
+                }
+                std::cout << "Accuracy " << count/101 * 100 << " %";
             }
+                break;
+
             case 4: break;
             default:
-            std::cout << "Incorrect choice. You should enter 1, 2, 3 or 4" << std::endl;
+                std::cout << "Incorrect choice. You should enter 1, 2, 3 or 4" << std::endl;
                 break;
         }
     } while (choice != 4);
