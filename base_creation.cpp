@@ -208,20 +208,18 @@ void appendIndex(std::string& path, Image& newElement, int name) {
 
     // Reading the existing inverted index
     FileStorage fs_readIndexInverted (path + "indexInverted.yml", FileStorage::READ);
-    std::vector<std::vector<int>> wholeData (newElement.word.size());
-    for (size_t i = 0; i != wholeData.size(); ++ i) {
-        fs_readIndexInverted ["indexInverted " + std::to_string(i)] >> wholeData[i];
+    FileStorage fs_writeIndexInverted (path + "indexInverted.yml", FileStorage::WRITE);
+
+    std::vector<int> curr;  // the most effective way I can
+    for (size_t i = 0; i != newElement.word.size(); ++ i) {
+        fs_readIndexInverted ["indexInverted " + std::to_string(i)] >> curr;
         if (newElement.word[i] > 0) {
-            wholeData[i].push_back(name - 1);
+            curr.push_back(name - 1);
+        } else {
+            fs_writeIndexInverted << "indexInverted " + std::to_string(i) << curr;
         }
     }
     fs_readIndexInverted.release();
-
-    // Writing the new inverted index. Can't figure out how to do this more effectively
-    FileStorage fs_writeIndexInverted (path + "indexInverted.yml", FileStorage::WRITE);
-    for (size_t i = 0; i != wholeData.size(); ++i) {
-        fs_writeIndexInverted << "indexInverted " + std::to_string(i) << wholeData[i];
-    }
     fs_writeIndexInverted.release();
 }
 
