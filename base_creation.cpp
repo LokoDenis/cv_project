@@ -215,9 +215,8 @@ void appendIndex(std::string& path, Image& newElement, int name) {
         fs_readIndexInverted ["indexInverted " + std::to_string(i)] >> curr;
         if (newElement.word[i] > 0) {
             curr.push_back(name - 1);
-        } else {
-            fs_writeIndexInverted << "indexInverted " + std::to_string(i) << curr;
         }
+        fs_writeIndexInverted << "indexInverted " + std::to_string(i) << curr;
     }
     fs_readIndexInverted.release();
     fs_writeIndexInverted.release();
