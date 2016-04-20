@@ -47,15 +47,8 @@ int main() {
         }
     }
 
-    // creating visual words
-    size_t i = 0;
-    while (i != labels.size()) {
-        std::vector<int> word (K, 0);
-        ++word[labels[i]];
-    }
-
     name = "cluster";
-    namedWindow(name);
+    namedWindow(name, CV_WINDOW_AUTOSIZE);
     imshow(name, src);
     waitKey(0);
     destroyWindow(name);
