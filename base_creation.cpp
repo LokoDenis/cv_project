@@ -108,13 +108,13 @@ void saveData(std::string& path, std::vector<Image>& data, Mat& clusterCenters,
         fs_clusterCenters << "clusterCenters" << clusterCenters;
         fs_clusterCenters.release();
 
-        for (size_t i = 0; i != indexInverted.size(); ++i) {
-            fs_indexInverted << "indexInverted " + std::to_string(i) << indexInverted[i];
+        for (size_t j = 0; j != indexInverted.size(); ++j) {
+            fs_indexInverted << "indexInverted " + std::to_string(j) << indexInverted[j];
         }
         fs_indexInverted.release();
     }
 
-void calculateInverdedIndex(std::vector<std::vector<int>>& inverted,
+void calculateInvertedIndex(std::vector<std::vector<int>>& inverted,
                             std::vector<Image>& data) {
     for (size_t i = 0; i != data.size(); ++i) {
         for (size_t j = 0; j != data[i].word.size(); ++j) {
@@ -152,7 +152,7 @@ void restoreMetric(std::string& path, Image& element, bool trigger) {
     std::cout << "restoreMetric end\n";
 }
 
-float countEuclidesDistance (double a, double b) {
+double countEuclidesDistance (double a, double b) {
     return (a - b) * (a - b);
 }
 
@@ -184,7 +184,6 @@ void appendIndex(std::string& path, Image& newElement, int name) {
 }
 
 void restoreAVisualWord(std::string& source, std::string& path, Image& newElement) {
-    std::cout << "restoreAVisualWord begin\n";
     Mat src = imread(source, CV_LOAD_IMAGE_UNCHANGED);  // reading Image and calculating its descriptor
     resize(src, src, Size(600, 700), 0, 0, INTER_LINEAR);
 
@@ -229,18 +228,14 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
         }
         newElement.word = visualWord;
     }
-    std::cout << "restoreAVisualWord end\n";
 }
 
 int searchInBase(std::string& path, Image& newElement) {
-    std::cout << "search begin\n";
-
     FileStorage fs_readInvertedIndex (path + "indexInverted.yml", FileStorage::READ);
     std::set<int> candidates;  // we will find out during iterating through the base
     std::set<int> best;
     std::set<int> intersect;
 
-    std::cout << "  Inverted read begin\n";
     bool firstTime = true;
     for (size_t i = 0; i != newElement.word.size(); ++i) {
         if (newElement.word[i] != 0) {
@@ -260,11 +255,7 @@ int searchInBase(std::string& path, Image& newElement) {
         }
     }
     fs_readInvertedIndex.release();
-    std::cout << "  Inverted read end\n";
-
-    std::cout << "  Words read begin\n";
     FileStorage fs_readWords (path + "words.yml", FileStorage::READ);
-    std::cout << "filestorage\n";
     int minIndex;
     double minValue;
     bool first = true;
@@ -275,11 +266,9 @@ int searchInBase(std::string& path, Image& newElement) {
         std::vector<double> word;
         double currentDistance = 0;
         fs_readWords["data_" + std::to_string(elem) + "word"] >> word;
-        std::cout << "  strange cycle begin\n";
         for (size_t j = 0; j != word.size(); ++j) {
             currentDistance += countEuclidesDistance(newElement.word[j], word[j]);
         }
-        std::cout << "  strange cycle end\n";
         word.empty();
         if (first) {
             minIndex = elem;
@@ -293,13 +282,10 @@ int searchInBase(std::string& path, Image& newElement) {
         }
     }
     fs_readWords.release();
-    std::cout << "  Inverted read end\n";
-    std::cout << "search end\n";
     return minIndex;
 }
 
 void visualize (std::string storage, int number, std::string source) {
-    std::cout << "visual begin\n";
     Mat best = imread(storage + std::to_string(number + 1) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);  // +1 'cause of the storage
     Mat img = imread(source, CV_LOAD_IMAGE_UNCHANGED);
     namedWindow("initial", CV_WINDOW_AUTOSIZE);
@@ -310,12 +296,11 @@ void visualize (std::string storage, int number, std::string source) {
     imshow("best", best);
     waitKey(0);
     destroyWindow("best");
-    std::cout << "visual end\n";
 }
 
 int main() {
     std::string storage = "/home/oracle/Project/kinopoisk/";  // folder with pictures
-    std::string path = "/home/oracle/Project/data/";  // folder where YAML data is saved
+    std::string path = "/home/oracle/Project/data/test/";  // folder where YAML data is saved
     int choice;
 
     do {
@@ -336,7 +321,7 @@ int main() {
                 createABase(storage, k, data, collection);  // creating straight and inverted index dictionaries
                 computeVisualWords(path, data, clusterCenters, collection);
                 std::vector<std::vector<int>> indexInverted (static_cast<unsigned int>(clusterCenters.rows));
-                calculateInverdedIndex(indexInverted, data);
+                calculateInvertedIndex(indexInverted, data);
                 saveData(path, data, clusterCenters, indexInverted);
                 std::cout << "\nDone!";
                 break;
