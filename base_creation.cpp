@@ -298,7 +298,7 @@ void visualize (std::string storage, int number, std::string source) {
 
 int main() {
     std::string storage = "/home/oracle/Project/kinopoisk/";  // folder with pictures
-    std::string path = "/home/oracle/Project/data/test/";  // folder where YAML data is saved
+    std::string path = "/home/oracle/Project/data";  // folder where YAML data is saved
     int choice;
 
     do {
