@@ -13,9 +13,9 @@ using namespace cv::xfeatures2d;
 int main() {
     Mat src = imread("/home/oracle/Project/Images/lena.jpg", CV_LOAD_IMAGE_UNCHANGED);
     Mat sec_src = imread("/home/oracle/Project/Images/exam.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-    Mat third_src = imread("/home/oracle/Project/Images/4th2.jpg", CV_LOAD_IMAGE_UNCHANGED);
+    Mat third_src = imread("/home/oracle/Project/kinopoisk/56.jpg", CV_LOAD_IMAGE_UNCHANGED);
     Ptr<Feature2D> f2d = SURF::create(1000, 1, 2, 1, 0);
-    Ptr<Feature2D> f2d_sift = SIFT::create(0, 3, 0.18, 5, 1.6); //  trying cycles
+    Ptr<Feature2D> f2d_sift = SIFT::create(0, 3, 0.15, 5, 1.6); //  trying cycles
     // Setup SimpleBlobDetector parameters.
     SimpleBlobDetector::Params params;
 

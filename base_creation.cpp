@@ -24,7 +24,7 @@ struct Image {
 };
 
 void countMetric(std::string& path, std::vector<Image>& data, int K) {
-    std::vector<int> countNoZeros(static_cast<unsigned int>(K), 0);  // vectors with dotes in particular clusters (for IDF)
+    std::vector<int> countNoZeros(static_cast<unsigned int>(K), 1);  // vectors with dotes in particular clusters (for IDF)
     std::vector<int> quantityOfDotes(data.size(), 0);  // total sum of dotes in each Image (for TF)
 
     for (size_t j = 0; j != data.size(); ++j) {
@@ -55,7 +55,7 @@ void createABase(std::string& path, int n, std::vector<Image>& data, Mat& collec
         if (src.empty()) continue;
         Image newElement;
         resize(src, src, Size(600, 700), 0, 0, INTER_LINEAR);
-        Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.18, 5, 1.6);
+        Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.15, 5, 1.6);
         Mat descriptor;
         std::vector<KeyPoint> keypoints;
         f2d->detectAndCompute(src, Mat(), keypoints, descriptor);
@@ -126,7 +126,6 @@ void calculateInvertedIndex(std::vector<std::vector<int>>& inverted,
 }
 
 void restoreMetric(std::string& path, Image& element, bool trigger) {
-    std::cout << "restoreMetric begin\n";
     FileStorage fs_readIdf(path + "idf.yml", FileStorage::READ);
     std::vector<int> countNoZeros;
     int quantityOfImages;
@@ -149,7 +148,6 @@ void restoreMetric(std::string& path, Image& element, bool trigger) {
         fs_writeIdf << "size" << quantityOfImages;
         fs_writeIdf.release();
     }
-    std::cout << "restoreMetric end\n";
 }
 
 double countEuclidesDistance (double a, double b) {
@@ -187,7 +185,7 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
     Mat src = imread(source, CV_LOAD_IMAGE_UNCHANGED);  // reading Image and calculating its descriptor
     resize(src, src, Size(600, 700), 0, 0, INTER_LINEAR);
 
-    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.18, 5, 1.6);
+    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.15, 5, 1.6);
     Mat descriptor;
     std::vector<KeyPoint> k;
     f2d->detectAndCompute(src, Mat(), k, descriptor);
@@ -265,7 +263,7 @@ int searchInBase(std::string& path, Image& newElement) {
     for (auto elem : best) {
         std::vector<double> word;
         double currentDistance = 0;
-        fs_readWords["data_" + std::to_string(elem) + "word"] >> word;
+        fs_readWords["data_" + std::to_string(elem) + "_word"] >> word;
         for (size_t j = 0; j != word.size(); ++j) {
             currentDistance += countEuclidesDistance(newElement.word[j], word[j]);
         }
