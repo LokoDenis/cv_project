@@ -24,6 +24,7 @@ struct Image {
 };
 
 void countMetric(std::string& path, std::vector<Image>& data, int K) {
+    std::cout << "contMetric begin\n";
     std::vector<int> countNoZeros(static_cast<unsigned int>(K), 1);  // vectors with dotes in particular clusters (for IDF)
     std::vector<int> quantityOfDotes(data.size(), 0);  // total sum of dotes in each Image (for TF)
 
@@ -46,10 +47,12 @@ void countMetric(std::string& path, std::vector<Image>& data, int K) {
             data[picture].word[cluster] = data[picture].word[cluster] / quantityOfDotes[picture] * log(data.size() / countNoZeros[cluster]);
         }
     }
+    std::cout << "countMetric end\n";
 }
 
 // walking through the source, reading raw data for further clustering
 void createABase(std::string& path, int n, std::vector<Image>& data, Mat& collection) {
+    std::cout << "CreateABase begin\n";
     for (size_t i = 0; i != n; ++i) {
         Mat src = imread(path + std::to_string(i + 1) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);  // +1 'cause of the images names
         if (src.empty()) continue;
@@ -62,18 +65,22 @@ void createABase(std::string& path, int n, std::vector<Image>& data, Mat& collec
         data.push_back(newElement);
         collection.push_back(descriptor);
     }
+    std::cout << "CreateABase end\n";
 }
 
 // creating visual words for pictures using clustering and TF-IDF metric
 void computeVisualWords(std::string& path, std::vector<Image>& data, Mat& clusterCenters, Mat& collection) {
+    std::cout << "computeVisualWords begin\n";
     int K = collection.rows / 80;
     std::vector<int> labels(static_cast<unsigned int>(collection.rows));
+    std::cout << "  kmeans begin\n";
     kmeans(collection, K, labels,
            cvTermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1.0), 1, KMEANS_PP_CENTERS, clusterCenters);
     // kmeans(InputArray data, int K, InputOutputArray bestLabels,
     // TermCriteria criteria, int attempts,
     // int flags, OutputArray clusterCenters=noArray())
     // creating vectors of clusters' frequencies
+    std::cout << "  kmeans end\n";
     unsigned int i = 0;  // creating vectors of clusters' frequencies
     while (i < labels.size()) {
         for (auto &elem : data) {
@@ -91,6 +98,7 @@ void computeVisualWords(std::string& path, std::vector<Image>& data, Mat& cluste
 // saving data of descriptors, clusters' clusterCenters, words (counted with the usage of TF-IDF metric) and dicts to the user's path
 void saveData(std::string& path, std::vector<Image>& data, Mat& clusterCenters,
           std::vector<std::vector<int>>& indexInverted) {
+    std::cout << "saveData begin";
     FileStorage fs_words(path + "words.yml", FileStorage::WRITE);
     FileStorage fs_clusterCenters(path + "clusterCenters.yml", FileStorage::WRITE);
     FileStorage fs_indexInverted(path + "indexInverted.yml", FileStorage::WRITE);
@@ -116,10 +124,12 @@ void saveData(std::string& path, std::vector<Image>& data, Mat& clusterCenters,
             fs_indexInverted << "indexInverted " + std::to_string(j) << indexInverted[j];
         }
         fs_indexInverted.release();
-    }
+    std::cout << "saveData end\n";
+}
 
 void calculateInvertedIndex(std::vector<std::vector<int>>& inverted,
                             std::vector<Image>& data) {
+    std::cout << "calculateInvertedIndex begin\n";
     for (size_t i = 0; i != data.size(); ++i) {
         for (size_t j = 0; j != data[i].word.size(); ++j) {
             if (data[i].word[j] > 0) {
@@ -127,6 +137,7 @@ void calculateInvertedIndex(std::vector<std::vector<int>>& inverted,
             }
         }
     }
+    std::cout << "calculateInvertedIndex end\n";
 }
 
 void restoreMetric(std::string& path, Image& element, bool trigger) {
