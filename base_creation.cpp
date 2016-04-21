@@ -54,7 +54,6 @@ void createABase(std::string& path, int n, std::vector<Image>& data, Mat& collec
         Mat src = imread(path + std::to_string(i + 1) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);  // +1 'cause of the images names
         if (src.empty()) continue;
         Image newElement;
-        resize(src, src, Size(600, 700), 0, 0, INTER_LINEAR);
         Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.15, 5, 1.6);
         Mat descriptor;
         std::vector<KeyPoint> keypoints;
@@ -92,12 +91,17 @@ void computeVisualWords(std::string& path, std::vector<Image>& data, Mat& cluste
 // saving data of descriptors, clusters' clusterCenters, words (counted with the usage of TF-IDF metric) and dicts to the user's path
 void saveData(std::string& path, std::vector<Image>& data, Mat& clusterCenters,
           std::vector<std::vector<int>>& indexInverted) {
-    FileStorage fs_description(path + "descriptors.yml", FileStorage::WRITE);
     FileStorage fs_words(path + "words.yml", FileStorage::WRITE);
     FileStorage fs_clusterCenters(path + "clusterCenters.yml", FileStorage::WRITE);
     FileStorage fs_indexInverted(path + "indexInverted.yml", FileStorage::WRITE);
     size_t i = 0;
+    int descriptorFile = 0;
+    FileStorage fs_description(path + "descriptors_" + std::to_string(descriptorFile) + ".yml", FileStorage::WRITE);
     for (auto &elem : data) {
+        if (i % 2000 == 0 && i != 0) {
+            ++descriptorFile;
+            fs_description.open(path + "descriptors_" + std::to_string(descriptorFile) + ".yml", FileStorage::WRITE);
+            }
         fs_description << "data_" + std::to_string(i) + "_description" << elem.description;
         fs_words << "data_" + std::to_string(i) + "_word" << elem.word;
         ++i;
@@ -155,7 +159,8 @@ double countEuclidesDistance (double a, double b) {
 }
 
 void appendSource(std::string& path, Image& newElement, int name) {
-    FileStorage fs_appendDescriptors (path + "descriptors.yml", FileStorage::APPEND);
+    int descriptorFile = (name - 1) / 2000;
+    FileStorage fs_appendDescriptors (path + "descriptors_" + std::to_string(descriptorFile) + ".yml", FileStorage::APPEND);
     FileStorage fs_appendWords (path + "words.yml", FileStorage::APPEND);
 
     fs_appendDescriptors << "data_" + std::to_string(name - 1) + "_description" << newElement.description;
@@ -183,13 +188,22 @@ void appendIndex(std::string& path, Image& newElement, int name) {
 
 void restoreAVisualWord(std::string& source, std::string& path, Image& newElement) {
     Mat src = imread(source, CV_LOAD_IMAGE_UNCHANGED);  // reading Image and calculating its descriptor
-    resize(src, src, Size(600, 700), 0, 0, INTER_LINEAR);
-
     Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.15, 5, 1.6);
     Mat descriptor;
     std::vector<KeyPoint> k;
     f2d->detectAndCompute(src, Mat(), k, descriptor);
     newElement.description = descriptor;
+
+//    cv::Point2d src_center(src.cols * 0.5, src.rows * 0.5); // defining a center of the source picture
+//    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 50 , 1);  // creating a rotation matrix
+//    warpAffine(src, src, rot_mat, src.size());
+//    GaussianBlur(src, src, Size(5,5), 2, 2, BORDER_DEFAULT);
+//    medianBlur(src, src, 5);
+//
+//    namedWindow("initial", CV_WINDOW_AUTOSIZE);
+//    imshow("initial", src);
+//    waitKey(0);
+//    destroyWindow("initial");
 
     Mat clusterCenters;
     FileStorage fs_clusterCenters(path + "clusterCenters.yml", FileStorage::READ);
@@ -286,6 +300,8 @@ int searchInBase(std::string& path, Image& newElement) {
 void visualize (std::string storage, int number, std::string source) {
     Mat best = imread(storage + std::to_string(number + 1) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);  // +1 'cause of the storage
     Mat img = imread(source, CV_LOAD_IMAGE_UNCHANGED);
+    resize(img, img, Size(600, 700), 0, 0, INTER_LINEAR);
+    resize(best, best, Size(600, 700), 0, 0, INTER_LINEAR);
     namedWindow("initial", CV_WINDOW_AUTOSIZE);
     imshow("initial", img);
     waitKey(0);
@@ -298,7 +314,7 @@ void visualize (std::string storage, int number, std::string source) {
 
 int main() {
     std::string storage = "/home/oracle/Project/kinopoisk/";  // folder with pictures
-    std::string path = "/home/oracle/Project/data";  // folder where YAML data is saved
+    std::string path = "/home/oracle/Project/data/";  // folder where YAML data is saved
     int choice;
 
     do {
