@@ -73,15 +73,16 @@ int main() {
     Mat sized_src_two;
     Mat sized_src_blobe_one;
     Mat sized_src_blobe_two;
-    Mat sized_src_sift_one;
-    Mat sized_src_sift_two;
+    Mat sized_src_sift_one = third_src;
+    Mat sized_src_sift_two = third_src_rotated;
 
     resize(src, sized_src_one, Size(600, 800), 0, 0, INTER_LINEAR);
     resize(src_rotated, sized_src_two, Size(600, 800), 0, 0, INTER_LINEAR);
     resize(sec_src, sized_src_blobe_one, Size(600, 600), 0, 0, INTER_LINEAR);
     resize(sec_src_rotated, sized_src_blobe_two, Size(600, 600), 0, 0, INTER_LINEAR);
-    resize(third_src, sized_src_sift_one, Size(600, 800), 0, 0, INTER_LINEAR);
-    resize(third_src_rotated, sized_src_sift_two, Size(600, 800), 0, 0, INTER_LINEAR);
+//    resize(third_src, sized_src_sift_one, Size(600, 800), 0, 0, INTER_LINEAR);
+//    resize(third_src_rotated, sized_src_sift_two, Size(600, 800), 0, 0, INTER_LINEAR);
+
 
     // descriptors and detectors
 

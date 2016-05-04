@@ -9,11 +9,9 @@
 #include <opencv2/opencv.hpp>
 #include "opencv2/xfeatures2d.hpp"
 #include <set>
+#include <stdexcept>
 
-// Current Task: 1) get to know how FileStorage::APPEND works.
-//               2) search for an image.
-//               3) manual clustering CHECK AGAIN
-//
+const int fileDivide = 1500;
 
 using namespace cv;
 using namespace cv::xfeatures2d;
@@ -55,7 +53,9 @@ void createABase(std::string& path, int n, std::vector<Image>& data, Mat& collec
     std::cout << "CreateABase begin\n";
     for (size_t i = 0; i != n; ++i) {
         Mat src = imread(path + std::to_string(i + 1) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);  // +1 'cause of the images names
-        if (src.empty()) continue;
+        if (src.empty()) {
+            throw std::invalid_argument("Check " + std::to_string(i + 1) + " picture");
+        }
         Image newElement;
         Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.15, 5, 1.6);
         Mat descriptor;
@@ -71,11 +71,11 @@ void createABase(std::string& path, int n, std::vector<Image>& data, Mat& collec
 // creating visual words for pictures using clustering and TF-IDF metric
 void computeVisualWords(std::string& path, std::vector<Image>& data, Mat& clusterCenters, Mat& collection) {
     std::cout << "computeVisualWords begin\n";
-    int K = collection.rows / 80;
+    int K = 1200;  // number of clusters
     std::vector<int> labels(static_cast<unsigned int>(collection.rows));
     std::cout << "  kmeans begin\n";
     kmeans(collection, K, labels,
-           cvTermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1.0), 1, KMEANS_PP_CENTERS, clusterCenters);
+           cvTermCriteria(CV_TERMCRIT_ITER, 10, 1.0), 1, KMEANS_PP_CENTERS, clusterCenters);
     // kmeans(InputArray data, int K, InputOutputArray bestLabels,
     // TermCriteria criteria, int attempts,
     // int flags, OutputArray clusterCenters=noArray())
@@ -99,16 +99,17 @@ void computeVisualWords(std::string& path, std::vector<Image>& data, Mat& cluste
 void saveData(std::string& path, std::vector<Image>& data, Mat& clusterCenters,
           std::vector<std::vector<int>>& indexInverted) {
     std::cout << "saveData begin";
-    FileStorage fs_words(path + "words.yml", FileStorage::WRITE);
     FileStorage fs_clusterCenters(path + "clusterCenters.yml", FileStorage::WRITE);
     FileStorage fs_indexInverted(path + "indexInverted.yml", FileStorage::WRITE);
-    size_t i = 0;
-    int descriptorFile = 0;
-    FileStorage fs_description(path + "descriptors_" + std::to_string(descriptorFile) + ".yml", FileStorage::WRITE);
+    int i = 0;
+    int fileNumber = 0;
+    FileStorage fs_words(path + "words_" + std::to_string(fileNumber) + ".yml", FileStorage::WRITE);
+    FileStorage fs_description(path + "descriptors_" + std::to_string(fileNumber) + ".yml", FileStorage::WRITE);
     for (auto &elem : data) {
-        if (i % 2000 == 0 && i != 0) {
-            ++descriptorFile;
-            fs_description.open(path + "descriptors_" + std::to_string(descriptorFile) + ".yml", FileStorage::WRITE);
+        if (i % fileDivide == 0 && i != 0) {
+            ++fileNumber;
+            fs_words.open(path + "words_" + std::to_string(fileNumber) + ".yml", FileStorage::WRITE);
+            fs_description.open(path + "descriptors_" + std::to_string(fileNumber) + ".yml", FileStorage::WRITE);
             }
         fs_description << "data_" + std::to_string(i) + "_description" << elem.description;
         fs_words << "data_" + std::to_string(i) + "_word" << elem.word;
@@ -170,9 +171,9 @@ double countEuclidesDistance (double a, double b) {
 }
 
 void appendSource(std::string& path, Image& newElement, int name) {
-    int descriptorFile = (name - 1) / 2000;
-    FileStorage fs_appendDescriptors (path + "descriptors_" + std::to_string(descriptorFile) + ".yml", FileStorage::APPEND);
-    FileStorage fs_appendWords (path + "words.yml", FileStorage::APPEND);
+    int fileNumber = (name - 1) / fileDivide;
+    FileStorage fs_appendDescriptors (path + "descriptors_" + std::to_string(fileNumber) + ".yml", FileStorage::APPEND);
+    FileStorage fs_appendWords (path + "words_" + std::to_string(fileNumber) + ".yml", FileStorage::APPEND);
 
     fs_appendDescriptors << "data_" + std::to_string(name - 1) + "_description" << newElement.description;
     fs_appendWords << "data_" + std::to_string(name - 1) + "_word" << newElement.word;
@@ -205,12 +206,13 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
     f2d->detectAndCompute(src, Mat(), k, descriptor);
     newElement.description = descriptor;
 
-//    cv::Point2d src_center(src.cols * 0.5, src.rows * 0.5); // defining a center of the source picture
-//    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 50 , 1);  // creating a rotation matrix
-//    warpAffine(src, src, rot_mat, src.size());
-//    GaussianBlur(src, src, Size(5,5), 2, 2, BORDER_DEFAULT);
-//    medianBlur(src, src, 5);
-//
+    // simulate the noise
+    cv::Point2d src_center(src.cols * 0.5, src.rows * 0.5); // defining a center of the source picture
+    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 50 , 1);  // creating a rotation matrix
+    warpAffine(src, src, rot_mat, src.size());
+    GaussianBlur(src, src, Size(5,5), 2, 2, BORDER_DEFAULT);
+    medianBlur(src, src, 3);
+
 //    namedWindow("initial", CV_WINDOW_AUTOSIZE);
 //    imshow("initial", src);
 //    waitKey(0);
@@ -255,40 +257,49 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
 
 int searchInBase(std::string& path, Image& newElement) {
     FileStorage fs_readInvertedIndex (path + "indexInverted.yml", FileStorage::READ);
-    std::set<int> candidates;  // we will find out during iterating through the base
     std::set<int> best;
     std::set<int> intersect;
 
     bool firstTime = true;
+    bool zeroIntersect = false;
     for (size_t i = 0; i != newElement.word.size(); ++i) {
         if (newElement.word[i] != 0) {
             std::vector<int> curr;
             fs_readInvertedIndex["indexInverted " + std::to_string(i)] >> curr;
-            for (auto& elem : curr) {
-                candidates.insert(elem);
-            }
             if (firstTime) {
-                best = candidates;
+                best.insert(curr.begin(), curr.end());
                 firstTime = false;
             } else {
                 std::set_intersection(curr.begin(), curr.end(), best.begin(), best.end(), std::inserter(intersect, intersect.begin()));
-                best = intersect;
+                if (intersect.empty()) {
+                    zeroIntersect = true;
+                }
+                if (!zeroIntersect) {
+                    best = intersect;
+                } else {
+                    best.insert(curr.begin(), curr.end());
+                }
                 intersect.clear();
             }
         }
     }
     fs_readInvertedIndex.release();
-    FileStorage fs_readWords (path + "words.yml", FileStorage::READ);
+    int oldWordsNum = 0;
+    FileStorage fs_readWords (path + "words_" + std::to_string(oldWordsNum) + ".yml", FileStorage::READ);
     int minIndex;
     double minValue;
     bool first = true;
-    if (best.empty()) {
-        best = candidates;
-    }
+    int wordsNum = 0;
     for (auto elem : best) {
         std::vector<double> word;
         double currentDistance = 0;
+        wordsNum = elem / fileDivide;
+        if (wordsNum > oldWordsNum) {
+            oldWordsNum = wordsNum;
+            fs_readWords.open(path + "words_" + std::to_string(oldWordsNum) + ".yml", FileStorage::READ);
+        }
         fs_readWords["data_" + std::to_string(elem) + "_word"] >> word;
+
         for (size_t j = 0; j != word.size(); ++j) {
             currentDistance += countEuclidesDistance(newElement.word[j], word[j]);
         }
@@ -313,14 +324,17 @@ void visualize (std::string storage, int number, std::string source) {
     Mat img = imread(source, CV_LOAD_IMAGE_UNCHANGED);
     resize(img, img, Size(600, 700), 0, 0, INTER_LINEAR);
     resize(best, best, Size(600, 700), 0, 0, INTER_LINEAR);
+
     namedWindow("initial", CV_WINDOW_AUTOSIZE);
     imshow("initial", img);
     waitKey(0);
     destroyWindow("initial");
+
     namedWindow("best", CV_WINDOW_AUTOSIZE);
     imshow("best", best);
     waitKey(0);
     destroyWindow("best");
+    std::cout << number + 1 << std::endl;
 }
 
 int main() {
@@ -366,14 +380,20 @@ int main() {
             }
             case 3: {
                 int num;
-                std::cout << "\nPicture's number: ";
-                std::cin >> num;
-                std::string source = storage + std::to_string(num) + ".jpg";  // path to the image
-                Image currentPicture;
-                restoreAVisualWord(source, path, currentPicture);
-                restoreMetric(path, currentPicture, false);
-                int nearest = searchInBase(path, currentPicture);
-                visualize(storage, nearest, source);
+                std::cout << "\nEnter 0 to exit.";
+                while (true) {
+                    std::cout << "\nPicture's number: ";
+                    std::cin >> num;
+                    if (num == 0) {
+                        break;
+                    }
+                    std::string source = storage + std::to_string(num) + ".jpg";  // path to the image
+                    Image currentPicture;
+                    restoreAVisualWord(source, path, currentPicture);
+                    restoreMetric(path, currentPicture, false);
+                    int nearest = searchInBase(path, currentPicture);
+                    visualize(storage, nearest, source);
+                }
                 break;
             }
             case 4: break;
