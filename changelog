@@ -35,7 +35,9 @@ added "menu" and some more functionality. Resolved problems with saving vectors,
 	  * image search now WORKS YAY
 	  * finally decided on the structure for images folder
 	  * rewrited descriptor calculation. now it uses float types as in kmeans thus iterators.
-  future enhancements:
-	  * rewrite adding an image with the usage of iterators so as to have an opportunity to add pictures with different names
-  	  * work on clustering to optimise the search
-
+  
+- late April changes:
+	  * splitted words.yml and descriptors.yml into files each one per 1500 images.
+	  * added a check for a valid image into the base creating function. It throws an exception if the image is corrupted so as no to have mistakes in the base.
+	  * optimized searchInBase function
+	

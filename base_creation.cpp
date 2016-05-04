@@ -290,8 +290,9 @@ int searchInBase(std::string& path, Image& newElement) {
     double minValue;
     bool first = true;
     int wordsNum = 0;
+    std::vector<double> word;
+
     for (auto elem : best) {
-        std::vector<double> word;
         double currentDistance = 0;
         wordsNum = elem / fileDivide;
         if (wordsNum > oldWordsNum) {
@@ -299,11 +300,10 @@ int searchInBase(std::string& path, Image& newElement) {
             fs_readWords.open(path + "words_" + std::to_string(oldWordsNum) + ".yml", FileStorage::READ);
         }
         fs_readWords["data_" + std::to_string(elem) + "_word"] >> word;
-
         for (size_t j = 0; j != word.size(); ++j) {
             currentDistance += countEuclidesDistance(newElement.word[j], word[j]);
         }
-        word.empty();
+        word.clear();
         if (first) {
             minIndex = elem;
             minValue = currentDistance;
@@ -315,6 +315,7 @@ int searchInBase(std::string& path, Image& newElement) {
             }
         }
     }
+
     fs_readWords.release();
     return minIndex;
 }
