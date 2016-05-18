@@ -8,7 +8,7 @@
 
 * The informal idea of the "LSWWC" project is to learn about time-management, advanced usage of google and basic operations with UNIX-based OS, to develop social skills and the sense of responsibility, to create smth usable and make first steps in the mysterious and very interesting road called "Computer Vision".
 
-* Current version 0.55
+* Current version 0.65
 
 So, Let's SEE What We Can!
 
@@ -19,13 +19,14 @@ Guided by Vadim Gorbachev.
 
 ### About source files and directories ###
 
-* first-steps.cpp and "First_steps" dir - includes examples of basic operation with images, such as rotation and color inversion. 
-* detectors.cpp and "Detected_dotes" dir - includes examples of detectors' and descriptors' work plus matching.
+* first_steps.cpp and "first_steps" dir - includes examples of basic operation with images, such as rotation and color inversion. 
+* detectors.cpp and "detectors" dir - includes examples of detectors' and descriptors' work plus matching.
 * clustering.cpp and "clusters" dir - includes examples of clustering on one image.
-* grads_and_etc.cpp and "Gradients" dir - shows the look of gradient vectors on pictures
+* grads.cpp and "gradients" dir - shows the look of gradient vectors on pictures
+* "report" folder contains my work report for the second checkpoint
 
 **The main file**
-base_creation.cpp
+adv_search.cpp
  
 * reads pictures from the specified folder and saves them as visual words
 
