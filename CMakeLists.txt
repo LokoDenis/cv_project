@@ -5,25 +5,28 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 find_package(OpenCV REQUIRED)
 
-#set(SOURCE_FILES first-steps.cpp)
+#set(SOURCE_FILES first_steps/first_steps.cpp)
 #add_executable(comvision ${SOURCE_FILES})
 
-#set(SOURCE_FILES grads_and_etc.cpp)
+#set(SOURCE_FILES gradients/grads.cpp)
 #add_executable(comvision ${SOURCE_FILES})
 
-#set(SOURCE_FILES detectors.cpp)
+#set(SOURCE_FILES detectors/detectors.cpp)
 #add_executable(comvision ${SOURCE_FILES})
 
-set(SOURCE_FILES base_creation.cpp)
+set(SOURCE_FILES adv_search.cpp)
 add_executable(comvision ${SOURCE_FILES})
 
-#set(SOURCE_FILES base_creation_testing.cpp)
+#set(SOURCE_FILES bow_search.cpp)
 #add_executable(comvision ${SOURCE_FILES})
 
 #set(SOURCE_FILES test.cpp)
 #add_executable(comvision ${SOURCE_FILES})
 
-#set(SOURCE_FILES clustering.cpp)
+#set(SOURCE_FILES clusters/clustering.cpp)
+#add_executable(comvision ${SOURCE_FILES})
+
+#set(SOURCE_FILES resize.cpp)
 #add_executable(comvision ${SOURCE_FILES})
 
 include_directories(${OpenCV_INCLUDE_DIRS})

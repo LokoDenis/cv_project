@@ -13,9 +13,10 @@ using namespace cv::xfeatures2d;
 int main() {
     Mat src = imread("/home/oracle/Project/Images/lena.jpg", CV_LOAD_IMAGE_UNCHANGED);
     Mat sec_src = imread("/home/oracle/Project/Images/exam.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-    Mat third_src = imread("/home/oracle/Project/kinopoisk/56.jpg", CV_LOAD_IMAGE_UNCHANGED);
+    Mat third_src = imread("/home/oracle/Project/test/1.jpg", CV_LOAD_IMAGE_UNCHANGED);
+    Mat third_src_rotated = imread("/home/oracle/Project/small_kinopoisk/6037.jpg", CV_LOAD_IMAGE_UNCHANGED);
     Ptr<Feature2D> f2d = SURF::create(1000, 1, 2, 1, 0);
-    Ptr<Feature2D> f2d_sift = SIFT::create(0, 3, 0.15, 5, 1.6); //  trying cycles
+    Ptr<Feature2D> f2d_sift = SIFT::create(0, 3, 0.08, 5, 1.6); //  trying cycles
     // Setup SimpleBlobDetector parameters.
     SimpleBlobDetector::Params params;
 
@@ -30,11 +31,11 @@ int main() {
     cv::Mat sec_rot_mat = cv::getRotationMatrix2D(sec_src_center, 50 , 1);  // creating a rotation matrix
     warpAffine(sec_src, sec_src_rotated, sec_rot_mat, sec_src.size());
 
-    cv::Mat third_src_rotated;
-    int angle = 20;
-    cv::Point2d third_src_center(third_src.cols * 0.5, third_src.rows * 0.5); // defining a center of the source picture
-    cv::Mat third_rot_mat = cv::getRotationMatrix2D(third_src_center, angle , 1);  // creating a rotation matrix
-    warpAffine(third_src, third_src_rotated, third_rot_mat, third_src.size());
+//    cv::Mat third_src_rotated;
+//    int angle = 20;
+//    cv::Point2d third_src_center(third_src.cols * 0.5, third_src.rows * 0.5); // defining a center of the source picture
+//    cv::Mat third_rot_mat = cv::getRotationMatrix2D(third_src_center, angle , 1);  // creating a rotation matrix
+//    warpAffine(third_src, third_src_rotated, third_rot_mat, third_src.size());
 
     // Change thresholds
     params.minThreshold = 0;
