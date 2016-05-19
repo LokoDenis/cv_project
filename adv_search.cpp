@@ -14,7 +14,7 @@
 // add EuclidesCount in the 1st half of the searchInBase function. Create a structure, which consists of a number
 // and a Euclides distance and after that just use std::sort with lambda function
 
-const double delta = 0.025;
+const double delta = 0.001;
 const int fileDivide = 700;
 std::string path = "/home/oracle/Project/data/";  // folder where YAML data is saved
 std::string storage = "/home/oracle/Project/small_kinopoisk/";  // folder with pictures
@@ -138,7 +138,7 @@ void saveData(std::vector<Image>& data, Mat& clusterCenters,
             fs_words.open(path + "words_" + std::to_string(fileNumber) + ".yml", FileStorage::WRITE);
             fs_description.open(path + "descriptors_" + std::to_string(fileNumber) + ".yml", FileStorage::WRITE);
             }
-        fs_description << "data_" + std::to_string(i) + "_description" << elem.description;
+        fs_description << "data_" + std::to_string(i) + "_descriptors" << elem.description;
         fs_words << "data_" + std::to_string(i) + "_word" << elem.word;
         ++i;
     }
@@ -202,7 +202,7 @@ void appendSource(Image& newElement, int name) {
     int fileNumber = (name - 1) / fileDivide;
     FileStorage fs_appendDescriptors (path + "descriptors_" + std::to_string(fileNumber) + ".yml", FileStorage::APPEND);
     FileStorage fs_appendWords (path + "words_" + std::to_string(fileNumber) + ".yml", FileStorage::APPEND);
-    fs_appendDescriptors << "data_" + std::to_string(name - 1) + "_description" << newElement.description;
+    fs_appendDescriptors << "data_" + std::to_string(name - 1) + "_descriptors" << newElement.description;
     fs_appendWords << "data_" + std::to_string(name - 1) + "_word" << newElement.word;
     fs_appendDescriptors.release();
     fs_appendWords.release();
@@ -210,8 +210,12 @@ void appendSource(Image& newElement, int name) {
     FileStorage fs_appendKeys (path + "keys_" + std::to_string(fileNumber) + ".yml", FileStorage::APPEND);
     Mat img = imread(storage + std::to_string(name) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);
     std::vector<KeyPoint> keys;
-    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.15, 5, 1.6);
+    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.08, 5, 1.6);
     f2d -> detect(img, keys);
+    if (keys.size() > 0) {
+        std::sort(keys.rbegin(), keys.rend(), [](KeyPoint a, KeyPoint b){return a.response < b.response;});
+        keys.resize(300);
+    }
     fs_appendKeys << "data_" + std::to_string(name - 1) + "_word" << keys;
     fs_appendKeys.release();
 }
@@ -236,10 +240,15 @@ void appendIndex(Image& newElement, int name) {
 void restoreAVisualWord(std::string& source, std::string& path, Image& newElement) {
     Mat src = imread(source, CV_LOAD_IMAGE_UNCHANGED);  // reading Image and calculating its descriptor
     resize(src, src, Size(480, 640), 0, 0, INTER_LINEAR);
-    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.12, 9, 1.6);
-    Mat descriptor;
+    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.08, 5, 1.6);
     std::vector<KeyPoint> k;
-    f2d->detectAndCompute(src, Mat(), k, descriptor);
+    f2d->detect(src, k);
+    if (k.size() > 300) {
+        std::sort(k.rbegin(), k.rend(), [](KeyPoint a, KeyPoint b){return a.response < b.response;});
+        k.resize(300);
+    }
+    Mat descriptor;
+    f2d -> compute (src, k, descriptor);
     newElement.description = descriptor;
 
     // simulate the noise
@@ -328,16 +337,16 @@ std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elemen
     fs_readWord.release();
     std::sort(matches.begin(), matches.end(), [](Candidate a, Candidate b) {return a.distance < b.distance;});
 
-//    int num = -1;
-//    for (int i = 0; i != matches.size(); ++i) {
-//        if (matches[i].number == 2) {
-//            num = i;
-//            break;
-//        }
-//    }
+    int num = -1;
+    for (int i = 0; i != matches.size(); ++i) {
+        if (matches[i].number == 42) {
+            num = i;
+            break;
+        }
+    }
 
-    if (matches.size() > 900) {
-        matches.resize(900);
+    if (matches.size() > 300) {
+        matches.resize(300);
     }
 
     return matches;
@@ -345,9 +354,15 @@ std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elemen
 
 int findMatch (std::string address, std::vector<Candidate>& data, Image& scenElement) {
     Mat scene = imread(address, CV_LOAD_IMAGE_UNCHANGED);
-    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.15, 5, 1.6);
+    resize(scene, scene, Size(480, 640), 0, 0, INTER_LINEAR);
+    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.08, 5, 1.6);
     std::vector<KeyPoint> scene_keys;
     f2d -> detect(scene, scene_keys);
+    if (scene_keys.size() > 300) {
+        std::sort(scene_keys.rbegin(), scene_keys.rend(), [](KeyPoint a, KeyPoint b) { return a.response < b.response; });
+        scene_keys.resize(300);
+    }
+
     int bestMatch = data[0].number;  //the best according to the bag-of-words algo
     std::sort(data.begin(), data.end(),[](Candidate a, Candidate b){return a.number < b.number;});
     int maxInlierCount = 0;
@@ -366,7 +381,7 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
             fs_readDescriptor.open(path + "descriptors_" + std::to_string(currentNumber) + ".yml", FileStorage::READ);
             fs_readKeys.open(path + "keys_" + std::to_string(currentNumber) + ".yml", FileStorage::READ);
         }
-        fs_readDescriptor["data_" + std::to_string(elem.number) + "_description"] >> currentDescriptor;
+        fs_readDescriptor["data_" + std::to_string(elem.number) + "_descriptors"] >> currentDescriptor;
         fs_readKeys["data_" + std::to_string(elem.number) + "_keys"] >> img_keys;
 
         FlannBasedMatcher matcher;
