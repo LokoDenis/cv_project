@@ -45,3 +45,6 @@ added "menu" and some more functionality. Resolved problems with saving vectors,
 	* added RANSAC to the searching algorithm
 	* optimized the number of keypoints for each picture
 	
+- 21.05 changes:
+	* optimized b-o-w part by blurring images 
+	
