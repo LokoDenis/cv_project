@@ -15,7 +15,7 @@
 // and a Euclides distance and after that just use std::sort with lambda function
 
 const double delta = 0.001;
-const int fileDivide = 700;
+const int fileDivide = 1;
 std::string path = "/home/oracle/Project/data/";  // folder where YAML data is saved
 std::string storage = "/home/oracle/Project/small_kinopoisk/";  // folder with pictures
 
@@ -34,12 +34,12 @@ struct Image {
 
 void countMetric(std::vector<Image>& data, int K) {
     std::cout << "countMetric begin\n";
-    std::vector<int> countNoZeros(static_cast<unsigned int>(K), 1);  // vectors with dotes in particular clusters (for IDF)
-    std::vector<int> quantityOfDotes(data.size(), 0);  // total sum of dotes in each Image (for TF)
+    std::vector<int> countNoZeros(static_cast<unsigned int>(K), 1);  // vectors with Dots in particular clusters (for IDF)
+    std::vector<int> quantityOfDots(data.size(), 0);  // total sum of Dots in each Image (for TF)
 
     for (size_t j = 0; j != data.size(); ++j) {
         for (size_t i = 0; i != data[j].word.size(); ++i) {
-            quantityOfDotes[j] += data[j].word[i];
+            quantityOfDots[j] += data[j].word[i];
             if (data[j].word[i] != 0) {
                 ++countNoZeros[i];
             }
@@ -53,7 +53,7 @@ void countMetric(std::vector<Image>& data, int K) {
 
     for (size_t picture = 0; picture != data.size(); ++picture) {
         for (size_t cluster = 0; cluster != data[picture].word.size(); ++cluster) {
-            double mean = data[picture].word[cluster] / quantityOfDotes[picture] * log(data.size() / countNoZeros[cluster]);
+            double mean = data[picture].word[cluster] / quantityOfDots[picture] * log(data.size() / countNoZeros[cluster]);
             data[picture].word[cluster] = (mean > delta ? mean : 0);
         }
     }
@@ -70,14 +70,15 @@ void createABase(int n, std::vector<Image>& data, Mat& collection) {
         if (src.empty()) {
             throw std::invalid_argument("Check " + std::to_string(i + 1) + " picture");
         }
+        GaussianBlur(src, src, Size(5,5), 2, 2, BORDER_DEFAULT);
         Image newElement;
-        Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.08, 5, 1.6);
+        Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.07, 5, 1.6);
         std::vector<KeyPoint> keypoints;
         f2d->detect(src, keypoints);
         if (keypoints.size() < 10) {
             throw std::invalid_argument("Bad detector for " + std::to_string(i + 1) + " picture");
         } else if (keypoints.size() > 300) {
-            std::sort(keypoints.rbegin(), keypoints.rend(), [](KeyPoint a, KeyPoint b){return a.response < b.response;});
+            std::sort(keypoints.rbegin(), keypoints.rend(), [](KeyPoint a, KeyPoint b){return a.response * a.size < b.response * b.size;});
             keypoints.resize(300);
         };
         Mat descriptor;
@@ -210,11 +211,11 @@ void appendSource(Image& newElement, int name) {
     FileStorage fs_appendKeys (path + "keys_" + std::to_string(fileNumber) + ".yml", FileStorage::APPEND);
     Mat img = imread(storage + std::to_string(name) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);
     std::vector<KeyPoint> keys;
-    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.08, 5, 1.6);
+    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.07, 5, 1.6);
     f2d -> detect(img, keys);
-    if (keys.size() > 0) {
-        std::sort(keys.rbegin(), keys.rend(), [](KeyPoint a, KeyPoint b){return a.response < b.response;});
-        keys.resize(300);
+    if (keys.size() > 350) {
+        std::sort(keys.rbegin(), keys.rend(), [](KeyPoint a, KeyPoint b){return a.response * a.size < b.response * b.size;});
+        keys.resize(350);
     }
     fs_appendKeys << "data_" + std::to_string(name - 1) + "_word" << keys;
     fs_appendKeys.release();
@@ -240,12 +241,13 @@ void appendIndex(Image& newElement, int name) {
 void restoreAVisualWord(std::string& source, std::string& path, Image& newElement) {
     Mat src = imread(source, CV_LOAD_IMAGE_UNCHANGED);  // reading Image and calculating its descriptor
     resize(src, src, Size(480, 640), 0, 0, INTER_LINEAR);
-    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.08, 5, 1.6);
+    GaussianBlur(src, src, Size(3,3), 2, 2, BORDER_DEFAULT);
+    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.07, 5, 1.6);
     std::vector<KeyPoint> k;
     f2d->detect(src, k);
-    if (k.size() > 300) {
-        std::sort(k.rbegin(), k.rend(), [](KeyPoint a, KeyPoint b){return a.response < b.response;});
-        k.resize(300);
+    if (k.size() > 350) {
+        std::sort(k.rbegin(), k.rend(), [](KeyPoint a, KeyPoint b){return a.response * a.size < b.response * b.size;});
+        k.resize(350);
     }
     Mat descriptor;
     f2d -> compute (src, k, descriptor);
@@ -337,16 +339,16 @@ std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elemen
     fs_readWord.release();
     std::sort(matches.begin(), matches.end(), [](Candidate a, Candidate b) {return a.distance < b.distance;});
 
-    int num = -1;
-    for (int i = 0; i != matches.size(); ++i) {
-        if (matches[i].number == 42) {
-            num = i;
-            break;
-        }
-    }
+//    int num = -1;
+//    for (int i = 0; i != matches.size(); ++i) {
+//        if (matches[i].number == 102) {
+//            num = i;
+//            break;
+//        }
+//    }
 
-    if (matches.size() > 300) {
-        matches.resize(300);
+    if (matches.size() > 100) {  // can't figure out, what size should it be
+        matches.resize(100);
     }
 
     return matches;
@@ -355,16 +357,17 @@ std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elemen
 int findMatch (std::string address, std::vector<Candidate>& data, Image& scenElement) {
     Mat scene = imread(address, CV_LOAD_IMAGE_UNCHANGED);
     resize(scene, scene, Size(480, 640), 0, 0, INTER_LINEAR);
-    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.08, 5, 1.6);
+    GaussianBlur(scene, scene, Size(3,3), 2, 2, BORDER_DEFAULT);
+    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.07, 5, 1.6);
     std::vector<KeyPoint> scene_keys;
     f2d -> detect(scene, scene_keys);
-    if (scene_keys.size() > 300) {
-        std::sort(scene_keys.rbegin(), scene_keys.rend(), [](KeyPoint a, KeyPoint b) { return a.response < b.response; });
-        scene_keys.resize(300);
+    if (scene_keys.size() > 350) {
+        std::sort(scene_keys.rbegin(), scene_keys.rend(), [](KeyPoint a, KeyPoint b) { return a.response * a.size < b.response * b.size;});
+        scene_keys.resize(350);
     }
 
     int bestMatch = data[0].number;  //the best according to the bag-of-words algo
-    std::sort(data.begin(), data.end(),[](Candidate a, Candidate b){return a.number < b.number;});
+    // std::sort(data.begin(), data.end(),[](Candidate a, Candidate b){return a.number < b.number;});
     int maxInlierCount = 0;
 
     int currentNumber = data[0].number / fileDivide;
@@ -418,7 +421,7 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
         }
 
         Mat mask;  // from that we can get the info of inliers
-        Mat H = findHomography(img_points, scene_points, CV_RANSAC, 7, mask);
+        Mat H = findHomography(img_points, scene_points, CV_RANSAC, 7, mask);  // another function
 
         for (size_t i = 0; i != mask.rows; ++i) {  // if the value is 0, that means the dot is an outlier
             if (static_cast<int>(mask.at<uchar>(i))) {
@@ -426,7 +429,7 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
             }
         }
 
-        bool validation = inlierCount > betterMatches.size() / 2;
+        bool validation = inlierCount >= betterMatches.size() / 2;
 
         if (inlierCount > maxInlierCount && validation) {
             maxInlierCount = inlierCount;
@@ -441,16 +444,14 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
 void visualize (int number, std::string source) {
     Mat best = imread(storage + std::to_string(number + 1) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);  // +1 'cause of the storage
     Mat img = imread(source, CV_LOAD_IMAGE_UNCHANGED);
-    resize(img, img, Size(600, 700), 0, 0, INTER_LINEAR);
-    resize(best, best, Size(600, 700), 0, 0, INTER_LINEAR);
-
+    resize(img, img, Size(480, 640), 0, 0, INTER_LINEAR);
     namedWindow("initial", CV_WINDOW_AUTOSIZE);
     imshow("initial", img);
-
     namedWindow("best", CV_WINDOW_AUTOSIZE);
     imshow("best", best);
-    waitKey(0);
-    destroyAllWindows();
+    waitKey(2500);
+    destroyWindow("initial");
+    destroyWindow("best");
     std::cout << number + 1 << std::endl;
 }
 

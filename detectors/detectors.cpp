@@ -13,10 +13,10 @@ using namespace cv::xfeatures2d;
 int main() {
     Mat src = imread("/home/oracle/Project/Images/lena.jpg", CV_LOAD_IMAGE_UNCHANGED);
     Mat sec_src = imread("/home/oracle/Project/Images/exam.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-    Mat third_src = imread("/home/oracle/Project/test/1.jpg", CV_LOAD_IMAGE_UNCHANGED);
-    Mat third_src_rotated = imread("/home/oracle/Project/small_kinopoisk/6037.jpg", CV_LOAD_IMAGE_UNCHANGED);
+    Mat third_src = imread("/home/oracle/Project/test/102.jpg", CV_LOAD_IMAGE_UNCHANGED);
+    Mat third_src_rotated = imread("/home/oracle/Project/small_kinopoisk/10.jpg", CV_LOAD_IMAGE_UNCHANGED);
     Ptr<Feature2D> f2d = SURF::create(1000, 1, 2, 1, 0);
-    Ptr<Feature2D> f2d_sift = SIFT::create(0, 3, 0.08, 5, 1.6); //  trying cycles
+    Ptr<Feature2D> f2d_sift = SIFT::create(0, 3, 0.07, 5, 1.6); //  trying cycles
     // Setup SimpleBlobDetector parameters.
     SimpleBlobDetector::Params params;
 
@@ -69,6 +69,13 @@ int main() {
 //        }
 //    }
 
+
+    GaussianBlur(third_src, third_src, Size(3,3), 2, 2, BORDER_DEFAULT);
+    //medianBlur(third_src, third_src, 3);
+
+    GaussianBlur(third_src_rotated, third_src_rotated, Size(5,5), 2, 2, BORDER_DEFAULT);
+    //medianBlur(third_src_rotated, third_src_rotated, 3);
+
     //resize in case image too large to fill the screen
     Mat sized_src_one;
     Mat sized_src_two;
@@ -81,7 +88,7 @@ int main() {
     resize(src_rotated, sized_src_two, Size(600, 800), 0, 0, INTER_LINEAR);
     resize(sec_src, sized_src_blobe_one, Size(600, 600), 0, 0, INTER_LINEAR);
     resize(sec_src_rotated, sized_src_blobe_two, Size(600, 600), 0, 0, INTER_LINEAR);
-//    resize(third_src, sized_src_sift_one, Size(600, 800), 0, 0, INTER_LINEAR);
+    resize(third_src, third_src, Size(480, 640), 0, 0, INTER_LINEAR);
 //    resize(third_src_rotated, sized_src_sift_two, Size(600, 800), 0, 0, INTER_LINEAR);
 
 
@@ -92,8 +99,15 @@ int main() {
     std::vector<KeyPoint> points_sift_one, points_sift_two;
     f2d -> detectAndCompute(sized_src_one, Mat(), points_one, descriptor_one); //surf
     f2d -> detectAndCompute(sized_src_two, Mat(), points_two, descriptor_two);
-    f2d_sift -> detectAndCompute (sized_src_sift_one, Mat(), points_sift_one, descriptor_sift_one);
-    f2d_sift -> detectAndCompute(sized_src_sift_two, Mat(), points_sift_two, descriptor_sift_two);
+    f2d_sift -> detect(sized_src_sift_one, points_sift_one);
+    f2d_sift -> detect(sized_src_sift_two, points_sift_two);
+    std::sort(points_sift_one.rbegin(), points_sift_one.rend(),[](KeyPoint a, KeyPoint b){ return a.response * a.size < b.response * b.size;});
+    std::sort(points_sift_two.rbegin(), points_sift_two.rend(),[](KeyPoint a, KeyPoint b){ return a.response * a.size < b.response * b.size;});
+    points_sift_one.resize(500);
+    points_sift_two.resize(500);
+    f2d_sift -> compute(sized_src_sift_one, points_sift_one, descriptor_sift_one);
+    f2d_sift -> compute(sized_src_sift_two, points_sift_two, descriptor_sift_two);
+
     blobe_detector -> detect(sized_src_blobe_one, blobe_points_one);
     blobe_detector -> detect(sized_src_blobe_two, blobe_points_two);
 
