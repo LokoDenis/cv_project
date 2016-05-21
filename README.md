@@ -8,7 +8,7 @@
 
 * The informal idea of the "LSWWC" project is to learn about time-management, advanced usage of google and basic operations with UNIX-based OS, to develop social skills and the sense of responsibility, to create smth usable and make first steps in the mysterious and very interesting road called "Computer Vision".
 
-* Current version 0.65
+* Current version 0.80
 
 So, Let's SEE What We Can!
 

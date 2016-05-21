@@ -238,12 +238,11 @@ void appendIndex(Image& newElement, int name) {
     fs_writeIndexInverted.release();
 }
 
-void restoreAVisualWord(std::string& source, std::string& path, Image& newElement) {
+void restoreAVisualWord(std::string& source, std::string& path, Image& newElement, std::vector<KeyPoint>& k) {
     Mat src = imread(source, CV_LOAD_IMAGE_UNCHANGED);  // reading Image and calculating its descriptor
     resize(src, src, Size(480, 640), 0, 0, INTER_LINEAR);
     GaussianBlur(src, src, Size(3,3), 2, 2, BORDER_DEFAULT);
     Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.07, 5, 1.6);
-    std::vector<KeyPoint> k;
     f2d->detect(src, k);
     if (k.size() > 350) {
         std::sort(k.rbegin(), k.rend(), [](KeyPoint a, KeyPoint b){return a.response * a.size < b.response * b.size;});
@@ -341,7 +340,7 @@ std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elemen
 
 //    int num = -1;
 //    for (int i = 0; i != matches.size(); ++i) {
-//        if (matches[i].number == 102) {
+//        if (matches[i].number == 9) {
 //            num = i;
 //            break;
 //        }
@@ -354,21 +353,11 @@ std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elemen
     return matches;
 }
 
-int findMatch (std::string address, std::vector<Candidate>& data, Image& scenElement) {
-    Mat scene = imread(address, CV_LOAD_IMAGE_UNCHANGED);
-    resize(scene, scene, Size(480, 640), 0, 0, INTER_LINEAR);
-    GaussianBlur(scene, scene, Size(3,3), 2, 2, BORDER_DEFAULT);
-    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.07, 5, 1.6);
-    std::vector<KeyPoint> scene_keys;
-    f2d -> detect(scene, scene_keys);
-    if (scene_keys.size() > 350) {
-        std::sort(scene_keys.rbegin(), scene_keys.rend(), [](KeyPoint a, KeyPoint b) { return a.response * a.size < b.response * b.size;});
-        scene_keys.resize(350);
-    }
+int findMatch (std::string address, std::vector<Candidate>& data, Image& scenElement, std::vector<KeyPoint>& scene_keys) {
 
     int bestMatch = data[0].number;  //the best according to the bag-of-words algo
     // std::sort(data.begin(), data.end(),[](Candidate a, Candidate b){return a.number < b.number;});
-    int maxInlierCount = 0;
+    double maxPercent = 0;
 
     int currentNumber = data[0].number / fileDivide;
     FileStorage fs_readDescriptor(path + "descriptors_" + std::to_string(currentNumber) + ".yml", FileStorage::READ);
@@ -378,7 +367,9 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
         int inlierCount = 0;
         std::vector<KeyPoint> img_keys;
         Mat currentDescriptor;
-
+//        if (elem.number == 9) {
+//            std::cout << "HERE\n";
+//        }
         if (elem.number / fileDivide != currentNumber) {
             currentNumber = elem.number / fileDivide;
             fs_readDescriptor.open(path + "descriptors_" + std::to_string(currentNumber) + ".yml", FileStorage::READ);
@@ -429,10 +420,10 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
             }
         }
 
-        bool validation = inlierCount >= betterMatches.size() / 2;
+        double percent = static_cast<double>(inlierCount)/betterMatches.size();
 
-        if (inlierCount > maxInlierCount && validation) {
-            maxInlierCount = inlierCount;
+        if (percent > maxPercent) {
+            maxPercent = percent;
             bestMatch = elem.number;
         }
     }
@@ -486,7 +477,8 @@ int main() {
                 std::cin >> num;
                 std::string source = storage + std::to_string(num) + ".jpg";  // path to the Image
                 Image addingImage;
-                restoreAVisualWord(source, path, addingImage);  // calculate tf-idf for the current
+                std::vector<KeyPoint> k;
+                restoreAVisualWord(source, path, addingImage, k);  // calculate tf-idf for the current
                 restoreMetric(addingImage, true);
                 appendSource(addingImage, num);  // append data
                 appendIndex(addingImage, num);  // append indexes
@@ -506,10 +498,11 @@ int main() {
                     }
                     std::string source = dir + std::to_string(num) + ".jpg";  // path to the image
                     Image currentPicture;
-                    restoreAVisualWord(source, path, currentPicture);
+                    std::vector<KeyPoint> k;
+                    restoreAVisualWord(source, path, currentPicture, k);
                     restoreMetric(currentPicture, false);
                     std::vector<Candidate> top = searchInBase(currentPicture);
-                    int nearest = findMatch(source, top, currentPicture);
+                    int nearest = findMatch(source, top, currentPicture, k);
                     visualize(nearest, source);
                 }
                 break;
