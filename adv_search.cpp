@@ -338,13 +338,13 @@ std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elemen
     fs_readWord.release();
     std::sort(matches.begin(), matches.end(), [](Candidate a, Candidate b) {return a.distance < b.distance;});
 
-//    int num = -1;
-//    for (int i = 0; i != matches.size(); ++i) {
-//        if (matches[i].number == 9) {
-//            num = i;
-//            break;
-//        }
-//    }
+    int num = -1;
+    for (int i = 0; i != matches.size(); ++i) {
+        if (matches[i].number == 342) {
+            num = i;
+            break;
+        }
+    }
 
     if (matches.size() > 100) {  // can't figure out, what size should it be
         matches.resize(100);
@@ -367,9 +367,9 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
         int inlierCount = 0;
         std::vector<KeyPoint> img_keys;
         Mat currentDescriptor;
-//        if (elem.number == 9) {
-//            std::cout << "HERE\n";
-//        }
+        if (elem.number == 21) {
+            std::cout << "HERE\n";
+        }
         if (elem.number / fileDivide != currentNumber) {
             currentNumber = elem.number / fileDivide;
             fs_readDescriptor.open(path + "descriptors_" + std::to_string(currentNumber) + ".yml", FileStorage::READ);
@@ -411,6 +411,9 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
             scene_points.push_back(scene_keys[betterMatches[i].trainIdx].pt);
         }
 
+        double check = static_cast<double>(betterMatches.size()) / static_cast<double>(matches.size());
+        bool sanity = (check > 0.1) ? true : false;
+
         Mat mask;  // from that we can get the info of inliers
         Mat H = findHomography(img_points, scene_points, CV_RANSAC, 7, mask);  // another function
 
@@ -422,7 +425,7 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
 
         double percent = static_cast<double>(inlierCount)/betterMatches.size();
 
-        if (percent > maxPercent) {
+        if (percent > maxPercent && sanity) {
             maxPercent = percent;
             bestMatch = elem.number;
         }
@@ -486,17 +489,17 @@ int main() {
                 break;
             }
             case 3: {
-                int num;
+                std::string num;
                 std::string dir = "/home/oracle/Project/test/";
                 std::cout << "\nReading pictures from " << dir;
                 std::cout << "\nEnter 0 to exit.";
                 while (true) {
-                    std::cout << "\nPicture's number: ";
+                    std::cout << "\nPicture's name: ";
                     std::cin >> num;
-                    if (num == 0) {
+                    if (num == "0") {
                         break;
                     }
-                    std::string source = dir + std::to_string(num) + ".jpg";  // path to the image
+                    std::string source = dir + num + ".jpg";  // path to the image
                     Image currentPicture;
                     std::vector<KeyPoint> k;
                     restoreAVisualWord(source, path, currentPicture, k);
