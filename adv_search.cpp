@@ -63,7 +63,8 @@ void countMetric(std::vector<Image>& data, int K) {
 // walking through the source, reading raw data for further clustering
 void createABase(int n, std::vector<Image>& data, Mat& collection) {
     int currentNumber = 0;
-    FileStorage fs_writeKeys(path + "keys_" + std::to_string(currentNumber) + ".yml", FileStorage::WRITE);
+    FileStorage fs_writeKeys(path + "keys_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::WRITE);
+    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.07, 5, 1.6);
     std::cout << "CreateABase begin\n";
     for (size_t i = 0; i != n; ++i) {
         Mat src = imread(storage + std::to_string(i + 1) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);  // +1 'cause of the images names
@@ -72,9 +73,8 @@ void createABase(int n, std::vector<Image>& data, Mat& collection) {
         }
         GaussianBlur(src, src, Size(5,5), 2, 2, BORDER_DEFAULT);
         Image newElement;
-        Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.07, 5, 1.6);
         std::vector<KeyPoint> keypoints;
-        f2d->detect(src, keypoints);
+        f2d -> detect(src, keypoints);
         if (keypoints.size() < 10) {
             throw std::invalid_argument("Bad detector for " + std::to_string(i + 1) + " picture");
         } else if (keypoints.size() > 300) {
@@ -87,8 +87,8 @@ void createABase(int n, std::vector<Image>& data, Mat& collection) {
         data.push_back(newElement);
         collection.push_back(descriptor);
         if (i / fileDivide > currentNumber) {
-            currentNumber = i/fileDivide;
-            fs_writeKeys.open(path + "keys_" + std::to_string(currentNumber) + ".yml", FileStorage::WRITE);
+            currentNumber = i / fileDivide;
+            fs_writeKeys.open(path + "keys_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::WRITE);
         }
         fs_writeKeys << "data_" + std::to_string(i) + "_keys" << keypoints;
     }
@@ -131,13 +131,13 @@ void saveData(std::vector<Image>& data, Mat& clusterCenters,
     FileStorage fs_indexInverted(path + "indexInverted.yml", FileStorage::WRITE);
     int i = 0;
     int fileNumber = 0;
-    FileStorage fs_words(path + "words_" + std::to_string(fileNumber) + ".yml", FileStorage::WRITE);
-    FileStorage fs_description(path + "descriptors_" + std::to_string(fileNumber) + ".yml", FileStorage::WRITE);
+    FileStorage fs_words(path + "words_" + std::to_string(fileNumber) + ".yml.gz", FileStorage::WRITE);
+    FileStorage fs_description(path + "descriptors_" + std::to_string(fileNumber) + ".yml.gz", FileStorage::WRITE);
     for (auto &elem : data) {
         if (i % fileDivide == 0 && i != 0) {
             ++fileNumber;
-            fs_words.open(path + "words_" + std::to_string(fileNumber) + ".yml", FileStorage::WRITE);
-            fs_description.open(path + "descriptors_" + std::to_string(fileNumber) + ".yml", FileStorage::WRITE);
+            fs_words.open(path + "words_" + std::to_string(fileNumber) + ".yml.gz", FileStorage::WRITE);
+            fs_description.open(path + "descriptors_" + std::to_string(fileNumber) + ".yml.gz", FileStorage::WRITE);
             }
         fs_description << "data_" + std::to_string(i) + "_descriptors" << elem.description;
         fs_words << "data_" + std::to_string(i) + "_word" << elem.word;
@@ -201,14 +201,14 @@ double countEuclidesDistance (double a, double b) {
 
 void appendSource(Image& newElement, int name) {
     int fileNumber = (name - 1) / fileDivide;
-    FileStorage fs_appendDescriptors (path + "descriptors_" + std::to_string(fileNumber) + ".yml", FileStorage::APPEND);
-    FileStorage fs_appendWords (path + "words_" + std::to_string(fileNumber) + ".yml", FileStorage::APPEND);
+    FileStorage fs_appendDescriptors (path + "descriptors_" + std::to_string(fileNumber) + ".yml.gz", FileStorage::APPEND);
+    FileStorage fs_appendWords (path + "words_" + std::to_string(fileNumber) + ".yml.gz", FileStorage::APPEND);
     fs_appendDescriptors << "data_" + std::to_string(name - 1) + "_descriptors" << newElement.description;
     fs_appendWords << "data_" + std::to_string(name - 1) + "_word" << newElement.word;
     fs_appendDescriptors.release();
     fs_appendWords.release();
 
-    FileStorage fs_appendKeys (path + "keys_" + std::to_string(fileNumber) + ".yml", FileStorage::APPEND);
+    FileStorage fs_appendKeys (path + "keys_" + std::to_string(fileNumber) + ".yml.gz", FileStorage::APPEND);
     Mat img = imread(storage + std::to_string(name) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);
     std::vector<KeyPoint> keys;
     Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.07, 5, 1.6);
@@ -251,18 +251,6 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
     Mat descriptor;
     f2d -> compute (src, k, descriptor);
     newElement.description = descriptor;
-
-    // simulate the noise
-//    cv::Point2d src_center(src.cols * 0.5, src.rows * 0.5); // defining a center of the source picture
-//    cv::Mat rot_mat = cv::getRotationMatrix2D(src_center, 50 , 1);  // creating a rotation matrix
-//    warpAffine(src, src, rot_mat, src.size());
-//    GaussianBlur(src, src, Size(5,5), 2, 2, BORDER_DEFAULT);
-//    medianBlur(src, src, 3);
-
-//    namedWindow("initial", CV_WINDOW_AUTOSIZE);
-//    imshow("initial", src);
-//    waitKey(0);
-//    destroyWindow("initial");
 
     Mat clusterCenters;
     FileStorage fs_clusterCenters(path + "clusterCenters.yml", FileStorage::READ);
@@ -316,12 +304,12 @@ std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elemen
     fs_readInvertedIndex.release();
 
     int currentNumber = *best.begin() / fileDivide;
-    FileStorage fs_readWord(path + "words_" + std::to_string(currentNumber) + ".yml", FileStorage::READ);
+    FileStorage fs_readWord(path + "words_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::READ);
     std::vector<Candidate> matches;
     for (auto elem : best) {
         if (elem / fileDivide != currentNumber) {
             currentNumber = elem / fileDivide;
-            fs_readWord.open(path + "words_" + std::to_string(currentNumber) + ".yml", FileStorage::READ);
+            fs_readWord.open(path + "words_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::READ);
         }
         std::vector<double> word;
         fs_readWord["data_" + std::to_string(elem) + "_word"] >> word;
@@ -338,16 +326,16 @@ std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elemen
     fs_readWord.release();
     std::sort(matches.begin(), matches.end(), [](Candidate a, Candidate b) {return a.distance < b.distance;});
 
-    int num = -1;
-    for (int i = 0; i != matches.size(); ++i) {
-        if (matches[i].number == 342) {
-            num = i;
-            break;
-        }
-    }
+//    int num = -1;
+//    for (int i = 0; i != matches.size(); ++i) {
+//        if (matches[i].number == 342) {
+//            num = i;
+//            break;
+//        }
+//    }
 
-    if (matches.size() > 100) {  // can't figure out, what size should it be
-        matches.resize(100);
+    if (matches.size() > 60) {  // can't figure out, what size should it be
+        matches.resize(60);
     }
 
     return matches;
@@ -360,20 +348,22 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
     double maxPercent = 0;
 
     int currentNumber = data[0].number / fileDivide;
-    FileStorage fs_readDescriptor(path + "descriptors_" + std::to_string(currentNumber) + ".yml", FileStorage::READ);
-    FileStorage fs_readKeys(path + "keys_" + std::to_string(currentNumber) + ".yml", FileStorage::READ);
+    FileStorage fs_readDescriptor(path + "descriptors_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::READ);
+    FileStorage fs_readKeys(path + "keys_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::READ);
 
     for (auto elem : data) {
         int inlierCount = 0;
         std::vector<KeyPoint> img_keys;
         Mat currentDescriptor;
-        if (elem.number == 21) {
-            std::cout << "HERE\n";
-        }
+
+//        if (elem.number == 9) {
+//            std::cout << "HERE\n";
+//        }
+
         if (elem.number / fileDivide != currentNumber) {
             currentNumber = elem.number / fileDivide;
-            fs_readDescriptor.open(path + "descriptors_" + std::to_string(currentNumber) + ".yml", FileStorage::READ);
-            fs_readKeys.open(path + "keys_" + std::to_string(currentNumber) + ".yml", FileStorage::READ);
+            fs_readDescriptor.open(path + "descriptors_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::READ);
+            fs_readKeys.open(path + "keys_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::READ);
         }
         fs_readDescriptor["data_" + std::to_string(elem.number) + "_descriptors"] >> currentDescriptor;
         fs_readKeys["data_" + std::to_string(elem.number) + "_keys"] >> img_keys;
@@ -395,7 +385,7 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
 
         std::vector<DMatch> betterMatches;
         for (size_t i = 0; i != currentDescriptor.rows; ++i) {
-            if (matches[i].distance <= 3 * min_dist) {
+            if (matches[i].distance <= 4 * min_dist) {
                 betterMatches.push_back(matches[i]);
             }
         }
@@ -411,9 +401,6 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
             scene_points.push_back(scene_keys[betterMatches[i].trainIdx].pt);
         }
 
-        double check = static_cast<double>(betterMatches.size()) / static_cast<double>(matches.size());
-        bool sanity = (check > 0.1) ? true : false;
-
         Mat mask;  // from that we can get the info of inliers
         Mat H = findHomography(img_points, scene_points, CV_RANSAC, 7, mask);  // another function
 
@@ -423,9 +410,10 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
             }
         }
 
-        double percent = static_cast<double>(inlierCount)/betterMatches.size();
+        // double sanity = static_cast<double>(betterMatches.size()) / static_cast<double>(matches.size());
+        double percent = static_cast<double>(inlierCount) / betterMatches.size();
 
-        if (percent > maxPercent && sanity) {
+        if (percent > maxPercent) {
             maxPercent = percent;
             bestMatch = elem.number;
         }

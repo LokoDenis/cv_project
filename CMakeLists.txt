@@ -17,6 +17,9 @@ find_package(OpenCV REQUIRED)
 set(SOURCE_FILES adv_search.cpp)
 add_executable(comvision ${SOURCE_FILES})
 
+#set(SOURCE_FILES test_save.cpp)
+#add_executable(comvision ${SOURCE_FILES})
+
 #set(SOURCE_FILES bow_search.cpp)
 #add_executable(comvision ${SOURCE_FILES})
 
