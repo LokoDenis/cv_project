@@ -38,7 +38,7 @@ search.cpp - core of the bot.
 
 ** For more detailed information related to the current progress consider looking through issues and changelog.txt **
 
-**Visualization**
+### Visualization ###
 
 
 ![Search.png](https://bitbucket.org/repo/6GEkA7/images/369375486-Search.png)
