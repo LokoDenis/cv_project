@@ -27,7 +27,7 @@ Guided by Vadim Gorbachev.
 * "helpful_vision" folder contains helpful project files, such as building a base, resizing images, cleaning the source from corrupted pictures and etc.
 * "bot" directory contains files related to parsing web-pages, downloading pictures from yandex servers and coordinating the bot's job. 
 
-** For helping with visualization and especially for writing code for Telegram Bot special thanx to Kalinov Alexey.
+** For helping with visualization and especially for writing code for Telegram Bot special thanx to Kalinov Alexey. **
 
 **The main file**
 search.cpp - core of the bot.
