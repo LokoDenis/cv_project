@@ -11,21 +11,13 @@
 #include <set>
 #include <stdexcept>
 
-// add EuclidesCount in the 1st half of the searchInBase function. Create a structure, which consists of a number
-// and a Euclides distance and after that just use std::sort with lambda function
-
-const double delta = 0.001;
+const double delta = 0.002;  // 0.009
 const int fileDivide = 1;
 std::string path = "/home/oracle/Project/data/";  // folder where YAML data is saved
 std::string storage = "/home/oracle/Project/small_kinopoisk/";  // folder with pictures
 
 using namespace cv;
 using namespace cv::xfeatures2d;
-
-struct Candidate {
-    int number;
-    double distance;
-};
 
 struct Image {
     Mat description;  // mat of descriptor for each Image
@@ -64,19 +56,25 @@ void countMetric(std::vector<Image>& data, int K) {
 void createABase(int n, std::vector<Image>& data, Mat& collection) {
     int currentNumber = 0;
     FileStorage fs_writeKeys(path + "keys_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::WRITE);
-    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.07, 5, 1.6);
+    Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.04, 5, 1.6);
+
     std::cout << "CreateABase begin\n";
     for (size_t i = 0; i != n; ++i) {
-        Mat src = imread(storage + std::to_string(i + 1) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);  // +1 'cause of the images names
+
+        if (i % 1000 == 0) {
+            std::cout << i << std::endl;
+        }
+
+        Mat src = imread(storage + std::to_string(i) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);  // +1 'cause of the images names
         if (src.empty()) {
-            throw std::invalid_argument("Check " + std::to_string(i + 1) + " picture");
+            throw std::invalid_argument("Check " + std::to_string(i) + " picture");
         }
         GaussianBlur(src, src, Size(5,5), 2, 2, BORDER_DEFAULT);
         Image newElement;
         std::vector<KeyPoint> keypoints;
         f2d -> detect(src, keypoints);
         if (keypoints.size() < 10) {
-            throw std::invalid_argument("Bad detector for " + std::to_string(i + 1) + " picture");
+            throw std::invalid_argument("Bad detector for " + std::to_string(i) + " picture");
         } else if (keypoints.size() > 300) {
             std::sort(keypoints.rbegin(), keypoints.rend(), [](KeyPoint a, KeyPoint b){return a.response * a.size < b.response * b.size;});
             keypoints.resize(300);
@@ -99,7 +97,7 @@ void createABase(int n, std::vector<Image>& data, Mat& collection) {
 // creating visual words for pictures using clustering and TF-IDF metric
 void computeVisualWords(std::vector<Image>& data, Mat& clusterCenters, Mat& collection) {
     std::cout << "computeVisualWords begin\n";
-    int K = 1100;  // number of clusters
+    int K = 2900;  // number of clusters
     std::vector<int> labels(static_cast<unsigned int>(collection.rows));
     std::cout << "  kmeans begin\n";
     kmeans(collection, K, labels,
@@ -125,7 +123,7 @@ void computeVisualWords(std::vector<Image>& data, Mat& clusterCenters, Mat& coll
 
 // saving data of descriptors, clusters' clusterCenters, words (counted with the usage of TF-IDF metric) and dicts to the user's path
 void saveData(std::vector<Image>& data, Mat& clusterCenters,
-          std::vector<std::vector<int>>& indexInverted) {
+              std::vector<std::vector<int>>& indexInverted) {
     std::cout << "saveData begin";
     FileStorage fs_clusterCenters(path + "clusterCenters.yml", FileStorage::WRITE);
     FileStorage fs_indexInverted(path + "indexInverted.yml", FileStorage::WRITE);
@@ -138,21 +136,21 @@ void saveData(std::vector<Image>& data, Mat& clusterCenters,
             ++fileNumber;
             fs_words.open(path + "words_" + std::to_string(fileNumber) + ".yml.gz", FileStorage::WRITE);
             fs_description.open(path + "descriptors_" + std::to_string(fileNumber) + ".yml.gz", FileStorage::WRITE);
-            }
+        }
         fs_description << "data_" + std::to_string(i) + "_descriptors" << elem.description;
         fs_words << "data_" + std::to_string(i) + "_word" << elem.word;
         ++i;
     }
-        fs_description.release();
-        fs_words.release();
+    fs_description.release();
+    fs_words.release();
 
-        fs_clusterCenters << "clusterCenters" << clusterCenters;
-        fs_clusterCenters.release();
+    fs_clusterCenters << "clusterCenters" << clusterCenters;
+    fs_clusterCenters.release();
 
-        for (size_t j = 0; j != indexInverted.size(); ++j) {
-            fs_indexInverted << "indexInverted " + std::to_string(j) << indexInverted[j];
-        }
-        fs_indexInverted.release();
+    for (size_t j = 0; j != indexInverted.size(); ++j) {
+        fs_indexInverted << "indexInverted " + std::to_string(j) << indexInverted[j];
+    }
+    fs_indexInverted.release();
     std::cout << "saveData end\n";
 }
 
@@ -289,162 +287,13 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
     }
 }
 
-std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elements for further work
-    FileStorage fs_readInvertedIndex (path + "indexInverted.yml", FileStorage::READ);
-    std::set<int> best;
-
-    for (size_t i = 0; i != newElement.word.size(); ++i) {
-        if (newElement.word[i] != 0) {
-            std::vector<int> curr;
-            fs_readInvertedIndex["indexInverted " + std::to_string(i)] >> curr;
-                best.insert(curr.begin(), curr.end());
-            }
-        }
-
-    fs_readInvertedIndex.release();
-
-    int currentNumber = *best.begin() / fileDivide;
-    FileStorage fs_readWord(path + "words_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::READ);
-    std::vector<Candidate> matches;
-    for (auto elem : best) {
-        if (elem / fileDivide != currentNumber) {
-            currentNumber = elem / fileDivide;
-            fs_readWord.open(path + "words_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::READ);
-        }
-        std::vector<double> word;
-        fs_readWord["data_" + std::to_string(elem) + "_word"] >> word;
-        double difference = 0;
-        for (size_t i = 0; i != newElement.word.size(); ++i) {
-            difference += countEuclidesDistance(newElement.word[i], word[i]);
-        }
-        Candidate add;
-        add.number = elem;
-        add.distance = difference;
-        matches.push_back(add);
-    }
-
-    fs_readWord.release();
-    std::sort(matches.begin(), matches.end(), [](Candidate a, Candidate b) {return a.distance < b.distance;});
-
-//    int num = -1;
-//    for (int i = 0; i != matches.size(); ++i) {
-//        if (matches[i].number == 342) {
-//            num = i;
-//            break;
-//        }
-//    }
-
-    if (matches.size() > 60) {  // can't figure out, what size should it be
-        matches.resize(60);
-    }
-
-    return matches;
-}
-
-int findMatch (std::string address, std::vector<Candidate>& data, Image& scenElement, std::vector<KeyPoint>& scene_keys) {
-
-    int bestMatch = data[0].number;  //the best according to the bag-of-words algo
-    // std::sort(data.begin(), data.end(),[](Candidate a, Candidate b){return a.number < b.number;});
-    double maxPercent = 0;
-
-    int currentNumber = data[0].number / fileDivide;
-    FileStorage fs_readDescriptor(path + "descriptors_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::READ);
-    FileStorage fs_readKeys(path + "keys_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::READ);
-
-    for (auto elem : data) {
-        int inlierCount = 0;
-        std::vector<KeyPoint> img_keys;
-        Mat currentDescriptor;
-
-//        if (elem.number == 9) {
-//            std::cout << "HERE\n";
-//        }
-
-        if (elem.number / fileDivide != currentNumber) {
-            currentNumber = elem.number / fileDivide;
-            fs_readDescriptor.open(path + "descriptors_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::READ);
-            fs_readKeys.open(path + "keys_" + std::to_string(currentNumber) + ".yml.gz", FileStorage::READ);
-        }
-        fs_readDescriptor["data_" + std::to_string(elem.number) + "_descriptors"] >> currentDescriptor;
-        fs_readKeys["data_" + std::to_string(elem.number) + "_keys"] >> img_keys;
-
-        FlannBasedMatcher matcher;
-        std::vector<DMatch> matches;
-        matcher.match(currentDescriptor, scenElement.description, matches);  // current -> object from our base
-                                                                             // scene -> photo we have
-        double min_dist = 100;  // cutting "bad" matches due to the distance
-        double max_dist = 0;
-        for (size_t i = 0; i != currentDescriptor.rows; ++i) {
-            if (matches[i].distance < min_dist) {
-                min_dist = matches[i].distance;
-            }
-            if (matches[i].distance > max_dist) {
-                max_dist = matches[i].distance;
-            }
-        }
-
-        std::vector<DMatch> betterMatches;
-        for (size_t i = 0; i != currentDescriptor.rows; ++i) {
-            if (matches[i].distance <= 4 * min_dist) {
-                betterMatches.push_back(matches[i]);
-            }
-        }
-
-        std::vector<Point2f> img_points, scene_points;  // best matched points
-        //item.trainIdx: This attribute gives us the index of the descriptor in the list of train descriptors
-        // (in our case, it’s the list of descriptors in the scene).
-        //item.queryIdx: This attribute gives us the index of the descriptor in the list of query descriptors
-        // (in our case, it’s the list of descriptors in the base).
-
-        for (size_t i = 0; i != betterMatches.size(); ++i) {
-            img_points.push_back(img_keys[betterMatches[i].queryIdx].pt);
-            scene_points.push_back(scene_keys[betterMatches[i].trainIdx].pt);
-        }
-
-        Mat mask;  // from that we can get the info of inliers
-        Mat H = findHomography(img_points, scene_points, CV_RANSAC, 7, mask);  // another function
-
-        for (size_t i = 0; i != mask.rows; ++i) {  // if the value is 0, that means the dot is an outlier
-            if (static_cast<int>(mask.at<uchar>(i))) {
-                ++inlierCount;
-            }
-        }
-
-        // double sanity = static_cast<double>(betterMatches.size()) / static_cast<double>(matches.size());
-        double percent = static_cast<double>(inlierCount) / betterMatches.size();
-
-        if (percent > maxPercent) {
-            maxPercent = percent;
-            bestMatch = elem.number;
-        }
-    }
-    fs_readKeys.release();
-    fs_readDescriptor.release();
-    return bestMatch;
-}
-
-void visualize (int number, std::string source) {
-    Mat best = imread(storage + std::to_string(number + 1) + ".jpg", CV_LOAD_IMAGE_UNCHANGED);  // +1 'cause of the storage
-    Mat img = imread(source, CV_LOAD_IMAGE_UNCHANGED);
-    resize(img, img, Size(480, 640), 0, 0, INTER_LINEAR);
-    namedWindow("initial", CV_WINDOW_AUTOSIZE);
-    imshow("initial", img);
-    namedWindow("best", CV_WINDOW_AUTOSIZE);
-    imshow("best", best);
-    waitKey(2500);
-    destroyWindow("initial");
-    destroyWindow("best");
-    std::cout << number + 1 << std::endl;
-}
-
 int main() {
     int choice;
     do {
         std::cout << "\nWhat do you want to do?" << std::endl;
         std::cout << "1) Create a base" << std::endl;
         std::cout << "2) Add a picture" << std::endl;
-        std::cout << "3) Search for the picture" << std::endl;
-        std::cout << "4) Exit" << std::endl;
+        std::cout << "3) Exit" << std::endl;
         std::cin >> choice;
         switch (choice) {
             case 1: {
@@ -476,34 +325,13 @@ int main() {
                 std::cout << "\nDone! ";
                 break;
             }
-            case 3: {
-                std::string num;
-                std::string dir = "/home/oracle/Project/test/";
-                std::cout << "\nReading pictures from " << dir;
-                std::cout << "\nEnter 0 to exit.";
-                while (true) {
-                    std::cout << "\nPicture's name: ";
-                    std::cin >> num;
-                    if (num == "0") {
-                        break;
-                    }
-                    std::string source = dir + num + ".jpg";  // path to the image
-                    Image currentPicture;
-                    std::vector<KeyPoint> k;
-                    restoreAVisualWord(source, path, currentPicture, k);
-                    restoreMetric(currentPicture, false);
-                    std::vector<Candidate> top = searchInBase(currentPicture);
-                    int nearest = findMatch(source, top, currentPicture, k);
-                    visualize(nearest, source);
-                }
-                break;
-            }
-            case 4: break;
+            case 3: break;
             default:
-            std::cout << "Incorrect choice. You should enter 1, 2, 3 or 4" << std::endl;
+                std::cout << "Incorrect choice. You should enter 1, 2, or 3" << std::endl;
                 break;
         }
-    } while (choice != 4);
+    } while (choice != 3);
 
     return 0;
 }
+
