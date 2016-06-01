@@ -1,4 +1,4 @@
-![Search.png](https://bitbucket.org/repo/6GEkA7/images/369375486-Search.png)# README #
+# README #
 
 ### LSWWC Project ###
 
@@ -39,6 +39,10 @@ search.cpp - core of the bot.
 ** For more detailed information related to the current progress consider looking through issues and changelog.txt **
 
 **Visualization**
+
+
+![Search.png](https://bitbucket.org/repo/6GEkA7/images/369375486-Search.png)
+
 
 * All the work done can be seen using the Telegram Bot @MoviePosterBot
 
