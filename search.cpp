@@ -11,7 +11,7 @@
 #include <set>
 #include <stdexcept>
 
-const double delta = 0.002;  // 0.009
+const double delta = 0.0078;  // 0.009
 const int fileDivide = 1;
 std::string path = "/home/oracle/Project/data/";  // path to lib files
 
@@ -38,9 +38,9 @@ void restoreAVisualWord(std::string& source, std::string& path, Image& newElemen
     GaussianBlur(src, src, Size(3,3), 2, 2, BORDER_DEFAULT);
     Ptr<Feature2D> f2d = SIFT::create(0, 3, 0.07, 5, 1.6);
     f2d->detect(src, k);
-    if (k.size() > 350) {
+    if (k.size() > 300) {
         std::sort(k.rbegin(), k.rend(), [](KeyPoint a, KeyPoint b){return a.response * a.size < b.response * b.size;});
-        k.resize(350);
+        k.resize(300);
     }
     Mat descriptor;
     f2d -> compute (src, k, descriptor);
@@ -108,7 +108,7 @@ std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elemen
     std::set<int> best;
 
     for (size_t i = 0; i != newElement.word.size(); ++i) {
-        if (newElement.word[i] != 0) {
+        if (newElement.word[i] > delta) {
             std::vector<int> curr;
             fs_readInvertedIndex["indexInverted " + std::to_string(i)] >> curr;
             best.insert(curr.begin(), curr.end());
@@ -127,6 +127,9 @@ std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elemen
         }
         std::vector<double> word;
         fs_readWord["data_" + std::to_string(elem) + "_word"] >> word;
+        if (word.empty()) {
+            fs_readWord["data_" + std::to_string(elem) + "word"] >> word;
+        }
         double difference = 0;
         for (size_t i = 0; i != newElement.word.size(); ++i) {
             difference += countEuclidesDistance(newElement.word[i], word[i]);
@@ -140,8 +143,8 @@ std::vector<Candidate> searchInBase(Image& newElement) {  //saving top 30 elemen
     fs_readWord.release();
     std::sort(matches.begin(), matches.end(), [](Candidate a, Candidate b) {return a.distance < b.distance;});
 
-    if (matches.size() > 40) {
-        matches.resize(40);
+    if (matches.size() > 50) {
+        matches.resize(50);
     }
 
     return matches;
@@ -229,9 +232,20 @@ int findMatch (std::string address, std::vector<Candidate>& data, Image& scenEle
     return realNumber;
 }
 
-int main(int argc, char* argv[]) {
-    std::string source(argv[1]);
-    std::string dir = "/home/oracle/Project/bot/";
+//int main(int argc, char* argv[]) {
+//    std::string source(argv[1]);
+//    std::string dir = "/home/oracle/Project/bot/";
+//    Image currentPicture;
+//    std::vector<KeyPoint> k;
+//    restoreAVisualWord(source, path, currentPicture, k);
+//    restoreMetric(currentPicture);
+//    std::vector<Candidate> top = searchInBase(currentPicture);
+//    int nearest = findMatch(source, top, currentPicture, k);
+//    std::cout << "http://www.kinopoisk.ru/film/" + std::to_string(nearest) << "\n";
+//}
+
+int main() {
+    std::string source = "/home/oracle/Project/test/club.jpg";
     Image currentPicture;
     std::vector<KeyPoint> k;
     restoreAVisualWord(source, path, currentPicture, k);
@@ -239,4 +253,5 @@ int main(int argc, char* argv[]) {
     std::vector<Candidate> top = searchInBase(currentPicture);
     int nearest = findMatch(source, top, currentPicture, k);
     std::cout << "http://www.kinopoisk.ru/film/" + std::to_string(nearest) << "\n";
+    return 0;
 }
