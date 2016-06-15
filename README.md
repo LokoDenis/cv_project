@@ -23,7 +23,7 @@ Guided by Vadim Gorbachev.
 * detectors.cpp and "detectors" dir - includes examples of detectors' and descriptors' work plus matching.
 * clustering.cpp and "clusters" dir - includes examples of clustering on one image.
 * grads.cpp and "gradients" dir - shows the look of gradient vectors on pictures
-* "report" folder contains my work report for the second checkpoint
+* "report" folder contains report on my results.
 * "helpful_vision" folder contains helpful project files, such as building a base, resizing images, cleaning the source from corrupted pictures and etc.
 * "bot" directory contains files related to parsing web-pages, downloading pictures from yandex servers and coordinating the bot's job. 
 
@@ -86,7 +86,7 @@ search.cpp - core of the bot.
 
 ![base.jpg](https://bitbucket.org/repo/6GEkA7/images/1885595572-base.jpg)
 
-7) Среднее время работы программы составляет 5-8 секунд.
+7) Среднее время работы программы на локальном устройстве составляет 5-8 секунд. Среднее время на среднем дроплете DigitalOcean - 15-16 сек.
 
 
 ### Who do I talk to? ###
