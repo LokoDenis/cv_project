@@ -2,7 +2,7 @@
 
 ### Ad Search Project ###
 
-* This is the project based on The OPENCV library. Supporting by Denis Belyakov, 1st course student of the faculty of Computer Science, Higher School of Economics.
+* This is the project based on The OPENCV library. Maintained by Denis Belyakov, faculty of Computer Science, Higher School of Economics.
 
 * The aim of this project is to create a program (or maybe an application), which will be able to show images from a base looking the same to the inputted one. It involves doing research in the Computer Vision sphere and learning about basic operations with pictures. 
 
