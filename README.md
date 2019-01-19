@@ -1,16 +1,10 @@
 # README #
 
-### LSWWC Project ###
+### Ad Search Project ###
 
 * This is the project based on The OPENCV library. Supporting by Denis Belyakov, 1st course student of the faculty of Computer Science, Higher School of Economics.
 
 * The aim of this project is to create a program (or maybe an application), which will be able to show images from a base looking the same to the inputted one. It involves doing research in the Computer Vision sphere and learning about basic operations with pictures. 
-
-* The informal idea of the "LSWWC" project is to learn about time-management, advanced usage of google and basic operations with UNIX-based OS, to develop social skills and the sense of responsibility, to create smth usable and make first steps in the mysterious and very interesting road called "Computer Vision".
-
-* Current version 0.95
-
-So, Let's SEE What We Can!
 
 Guided by Vadim Gorbachev.
 
@@ -26,8 +20,6 @@ Guided by Vadim Gorbachev.
 * "report" folder contains report on my results.
 * "helpful_vision" folder contains helpful project files, such as building a base, resizing images, cleaning the source from corrupted pictures and etc.
 * "bot" directory contains files related to parsing web-pages, downloading pictures from yandex servers and coordinating the bot's job. 
-
-** For helping with visualization and especially for writing code for the @MoviePosterBot thanks to Kalinov Alexey. **
 
 **The main file**
 search.cpp - core of the bot.
@@ -91,6 +83,6 @@ search.cpp - core of the bot.
 
 ### Who do I talk to? ###
 
-* The owner of this repo is alev.
+* The owner of this repo is sanityseeker
 * Contact emails: 
-lokodenis73@gmail.com, dobelyakov@edu.hse.ru
+sanityseeker@ya.ru, dobelyakov@edu.hse.ru
