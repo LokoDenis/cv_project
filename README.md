@@ -6,9 +6,6 @@
 
 * The aim of this project is to create a program (or maybe an application), which will be able to show images from a base looking the same to the inputted one. It involves doing research in the Computer Vision sphere and learning about basic operations with pictures. 
 
-Guided by Vadim Gorbachev.
-
-
 
 
 ### About source files and directories ###
